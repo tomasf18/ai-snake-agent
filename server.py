@@ -35,7 +35,15 @@ MAX_HIGHSCORES = 10
 class GameServer:
     """Network Game Server."""
 
-    def __init__(self, level: int, timeout: int, seed: int = 0, players = 1, grading: str = None, dbg: bool = False):
+    def __init__(
+        self,
+        level: int,
+        timeout: int,
+        seed: int = 0,
+        players=1,
+        grading: str = None,
+        dbg: bool = False,
+    ):
         """Initialize Gameserver."""
         self.dbg = dbg
         self.seed = seed
@@ -65,9 +73,9 @@ class GameServer:
             )
 
             self._highscores.append((player, self.game.snakes[player].score))
-            self._highscores = sorted(self._highscores, key=lambda s: s[1], reverse=True)[
-                :MAX_HIGHSCORES
-            ]
+            self._highscores = sorted(
+                self._highscores, key=lambda s: s[1], reverse=True
+            )[:MAX_HIGHSCORES]
 
         with open(HIGHSCORE_FILE, "w") as outfile:
             json.dump(self._highscores, outfile)
@@ -84,15 +92,14 @@ class GameServer:
                 await viewer.send(json.dumps(game_info))
             except Exception:
                 self.viewers.remove(viewer)
-                viewer.close()  
-            
+                viewer.close()
+
         for ws, player in self.game_player.items():
             try:
                 await ws.send(json.dumps(game_info))
             except Exception:
                 self.game_player.pop(ws)
                 await ws.close()
-
 
     async def incomming_handler(self, websocket: WebSocketCommonProtocol, path: str):
         """Process new clients arriving at the server."""
@@ -155,35 +162,34 @@ class GameServer:
                         await self.send_info()
 
                     if state := await self.game.next_frame():
-
                         for viewer in self.viewers:
                             try:
                                 await viewer.send(json.dumps(state))
                             except Exception as err:
-                                logger.error(err)   
+                                logger.error(err)
                                 self.viewers.remove(viewer)
                                 break
 
-                        snakes = state["snakes"]    
-                        del state["snakes"]  # remove snakes from state as we only send our snake sight
+                        snakes = state["snakes"]
+                        del state[
+                            "snakes"
+                        ]  # remove snakes from state as we only send our snake sight
 
                         for player in game_players:
                             state["ts"] = datetime.now().isoformat()
                             for player_snake in snakes:
                                 if player_snake["name"] == player.name:
                                     state = {**state, **player_snake}
-                                
+
                             await player.ws.send(json.dumps(state))
 
-
-                self.save_highscores() 
-
+                self.save_highscores()
 
                 await self.send_info(highscores=True)
                 for ws, player in self.game_player.items():
                     await ws.close()
                 self.game_player = {}
-                
+
             except websockets.exceptions.ConnectionClosed as ws_closed:
                 if ws_closed in self.game_player:
                     self.game_player.pop(ws_closed)
@@ -211,12 +217,14 @@ if __name__ == "__main__":
     parser.add_argument("--bind", help="IP address to bind to", default="")
     parser.add_argument("--port", help="TCP port", type=int, default=8000)
     parser.add_argument("--seed", help="Seed number", type=int, default=0)
-    parser.add_argument("--debug", help="Open Bitmap with map on gameover", action='store_true')
+    parser.add_argument(
+        "--debug", help="Open Bitmap with map on gameover", action="store_true"
+    )
     parser.add_argument("--players", help="Number of players", type=int, default=1)
     parser.add_argument(
         "--grading-server",
         help="url of grading server",
-        default=None, #TODO "http://tetriscores.av.it.pt/game",
+        default=None,  # TODO "http://tetriscores.av.it.pt/game",
     )
     args = parser.parse_args()
 

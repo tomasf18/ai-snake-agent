@@ -30,8 +30,8 @@ SNAKE_BODY = {
     "down_tail": (40, 40),
     "left_tail": (0, 40),
     "right_tail": (40, 0),
-    "vertical": (2*40, 0),
-    "horizontal": (2*40, 40),
+    "vertical": (2 * 40, 0),
+    "horizontal": (2 * 40, 40),
 }
 
 STONE = (10 * 16, 0)
@@ -119,6 +119,7 @@ class Rock(Artifact):
         self.name = "rock"
         super().__init__(*args, **kw)
 
+
 class Food(Artifact):
     def __init__(self, *args, **kw):
         self.sprite = (SPRITES, (0, 0), (*SNAKE["up"], *scale((1, 1))))
@@ -126,12 +127,14 @@ class Food(Artifact):
         super().__init__(*args, **kw)
         self.image.fill((200, 0, 0))
 
+
 class SuperFood(Artifact):
     def __init__(self, *args, **kw):
         self.sprite = (SPRITES, (0, 0), (*SNAKE["up"], *scale((1, 1))))
         self.name = "superfood"
         super().__init__(*args, **kw)
         self.image.fill((100, 0, 100))
+
 
 class Snake(Artifact):
     def __init__(self, *args, **kw):
@@ -154,12 +157,12 @@ class Snake(Artifact):
             self.direction = "up"
 
         if sprite_id.endswith("_0"):
-            #self.sprite = (SPRITES, (0, 0), (*SNAKE[self.direction], *scale((1, 1))))
-            plain = pygame.Surface((CHAR_SIZE)) #TODO replace body
+            # self.sprite = (SPRITES, (0, 0), (*SNAKE[self.direction], *scale((1, 1))))
+            plain = pygame.Surface((CHAR_SIZE))  # TODO replace body
             plain.fill((230, 0, 0))
             self.sprite = (plain, (0, 0))
         else:
-            plain = pygame.Surface((CHAR_SIZE)) #TODO replace body
+            plain = pygame.Surface((CHAR_SIZE))  # TODO replace body
             plain.fill((0, 230, 0))
             self.sprite = (plain, (0, 0))
         self.update_sprite(tuple(new_pos))
@@ -310,37 +313,46 @@ async def main_game():
         if "snakes" in state:
             for snake in state["snakes"]:
                 import pprint
+
                 pprint.pprint(snake)
                 for idx, snake_body_part in enumerate(snake["body"]):
-                    if f"{snake["name"]}_{idx}" not in [s.sprite_id for s in main_group.sprites()]:                       
-                        main_group.add(Snake(pos=snake_body_part, sprite_id=f"{snake["name"]}_{idx}", idx=idx))
+                    if f"{snake['name']}_{idx}" not in [
+                        s.sprite_id for s in main_group.sprites()
+                    ]:
+                        main_group.add(
+                            Snake(
+                                pos=snake_body_part,
+                                sprite_id=f"{snake['name']}_{idx}",
+                                idx=idx,
+                            )
+                        )
                     else:
-                        main_group.update(snake_body_part, sprite_id=f"{snake["name"]}_{idx}")
-
+                        main_group.update(
+                            snake_body_part, sprite_id=f"{snake['name']}_{idx}"
+                        )
 
         if "food" in state:
             for food in state["food"]:
                 if food not in [f.sprite_id for f in food_group.sprites()]:
-                    x,y,kind = food
+                    x, y, kind = food
                     if kind == "FOOD":
-                        food_group.add(Food(pos=(x,y), sprite_id=food))
+                        food_group.add(Food(pos=(x, y), sprite_id=food))
                     else:
-                        food_group.add(SuperFood(pos=(x,y), sprite_id=food))
+                        food_group.add(SuperFood(pos=(x, y), sprite_id=food))
             for food in food_group.sprites():
                 if food.sprite_id not in state["food"]:
                     food_group.remove(food)
 
-
-#        if "rocks" in state:
-#            for rock in state["rocks"]:
-#                enemies_group.add(Rock(pos=rock["pos"], sprite_id=rock["id"]))
+        #        if "rocks" in state:
+        #            for rock in state["rocks"]:
+        #                enemies_group.add(Rock(pos=rock["pos"], sprite_id=rock["id"]))
 
         main_group.draw(SCREEN)
         food_group.draw(SCREEN)
 
         if "highscores" in state:
             highscores = state["highscores"]
-        
+
             if (f"<{state['player']}>", state["score"]) not in highscores:
                 highscores.append((f"<{state['player']}>", state["score"]))
             highscores = sorted(highscores, key=lambda s: s[1], reverse=True)[:-1]

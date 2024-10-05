@@ -29,7 +29,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 state = json.loads(
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
-                print(state)  # print the state, you can use this to further process the game state
+                print(
+                    state
+                )  # print the state, you can use this to further process the game state
                 # Next lines are only for the Human Agent, the key values are nonetheless the correct ones!
                 key = ""
                 for event in pygame.event.get():
