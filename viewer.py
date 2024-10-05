@@ -35,9 +35,8 @@ SNAKE_BODY = {
 }
 
 STONE = (10 * 16, 0)
-FALLOUT = {"c": (32, 96)}
 
-CHAR_LENGTH = 40
+CHAR_LENGTH = 20
 CHAR_SIZE = CHAR_LENGTH, CHAR_LENGTH
 SCALE = 1
 
@@ -127,6 +126,12 @@ class Food(Artifact):
         super().__init__(*args, **kw)
         self.image.fill((200, 0, 0))
 
+class SuperFood(Artifact):
+    def __init__(self, *args, **kw):
+        self.sprite = (SPRITES, (0, 0), (*SNAKE["up"], *scale((1, 1))))
+        self.name = "superfood"
+        super().__init__(*args, **kw)
+        self.image.fill((100, 0, 100))
 
 class Snake(Artifact):
     def __init__(self, *args, **kw):
@@ -149,7 +154,10 @@ class Snake(Artifact):
             self.direction = "up"
 
         if sprite_id.endswith("_0"):
-            self.sprite = (SPRITES, (0, 0), (*SNAKE[self.direction], *scale((1, 1))))
+            #self.sprite = (SPRITES, (0, 0), (*SNAKE[self.direction], *scale((1, 1))))
+            plain = pygame.Surface((CHAR_SIZE)) #TODO replace body
+            plain.fill((230, 0, 0))
+            self.sprite = (plain, (0, 0))
         else:
             plain = pygame.Surface((CHAR_SIZE)) #TODO replace body
             plain.fill((0, 230, 0))
@@ -300,20 +308,24 @@ async def main_game():
             )
 
         if "snakes" in state:
-            print(len(main_group.sprites()))
             for snake in state["snakes"]:
-                print(snake)
-                for idx, snake_body_part in enumerate(state["snakes"][snake]):
-                    if f"{snake}_{idx}" not in [s.sprite_id for s in main_group.sprites()]:                       
-                        main_group.add(Snake(pos=snake_body_part, sprite_id=f"{snake}_{idx}", idx=idx))
+                import pprint
+                pprint.pprint(snake)
+                for idx, snake_body_part in enumerate(snake["body"]):
+                    if f"{snake["name"]}_{idx}" not in [s.sprite_id for s in main_group.sprites()]:                       
+                        main_group.add(Snake(pos=snake_body_part, sprite_id=f"{snake["name"]}_{idx}", idx=idx))
                     else:
-                        main_group.update(snake_body_part, sprite_id=f"{snake}_{idx}")
+                        main_group.update(snake_body_part, sprite_id=f"{snake["name"]}_{idx}")
 
 
         if "food" in state:
             for food in state["food"]:
                 if food not in [f.sprite_id for f in food_group.sprites()]:
-                    food_group.add(Food(pos=food, sprite_id=food))
+                    x,y,kind = food
+                    if kind == "FOOD":
+                        food_group.add(Food(pos=(x,y), sprite_id=food))
+                    else:
+                        food_group.add(SuperFood(pos=(x,y), sprite_id=food))
             for food in food_group.sprites():
                 if food.sprite_id not in state["food"]:
                     food_group.remove(food)
@@ -398,7 +410,7 @@ if __name__ == "__main__":
 
     LOOP = asyncio.get_event_loop()
     pygame.font.init()
-    q = asyncio.Queue()
+    q: asyncio.Queue = asyncio.Queue()
 
     ws_path = f"ws://{args.server}:{args.port}/viewer"
 

@@ -156,20 +156,25 @@ class GameServer:
 
                     if state := await self.game.next_frame():
 
-                        for player in game_players:
-                            state["player"] = player.name
-                            state["ts"] = datetime.now().isoformat()
+                        for viewer in self.viewers:
+                            try:
+                                await viewer.send(json.dumps(state))
+                            except Exception as err:
+                                logger.error(err)   
+                                self.viewers.remove(viewer)
+                                break
 
+                        snakes = state["snakes"]    
+                        del state["snakes"]  # remove snakes from state as we only send our snake sight
+
+                        for player in game_players:
+                            state["ts"] = datetime.now().isoformat()
+                            for player_snake in snakes:
+                                if player_snake["name"] == player.name:
+                                    state = {**state, **player_snake}
+                                
                             await player.ws.send(json.dumps(state))
 
-                            for viewer in self.viewers:
-                                try:
-                                    await viewer.send(json.dumps(state))
-                                except Exception as err:
-                                    logger.error(err)   
-                                    self.viewers.remove(viewer)
-                                    break
-                    print("Next frame")
 
                 self.save_highscores() 
 
@@ -180,8 +185,8 @@ class GameServer:
                 self.game_player = {}
                 
             except websockets.exceptions.ConnectionClosed as ws_closed:
-                print(ws_closed)
-                self.game_player.pop(ws_closed)
+                if ws_closed in self.game_player:
+                    self.game_player.pop(ws_closed)
                 logger.error("Player disconnected: %s", ws_closed)
             finally:
                 try:

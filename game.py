@@ -1,10 +1,9 @@
 import asyncio
 import logging
-import math
 import random
 from collections import deque
 
-from consts import KILL_SNAKE_POINTS, TIMEOUT, Direction, HISTORY_LEN, Tiles
+from consts import KILL_SNAKE_POINTS, TIMEOUT, Direction, HISTORY_LEN, Tiles, SuperFood
 from mapa import Map
 
 logger = logging.getLogger("Game")
@@ -26,9 +25,21 @@ class Snake:
         self._alive = True
         self.lastkey = ""
         self.to_grow = 1
+        self.range = 3
 
-    def grow(self):
-        self.to_grow += 1
+    def sight(self, mapa, snakes):
+        in_range = mapa.get_zone(self.head, self.range)
+
+        for snake in snakes:    # mark all snakes in the map
+            for x,y in snake.body:
+                if x in in_range and y in in_range[x]:
+                    in_range[x][y] = Tiles.SNAKE
+
+        return in_range
+
+
+    def grow(self, amount=1):
+        self.to_grow += amount
 
     @property
     def head(self):
@@ -95,9 +106,13 @@ class Snake:
             return
         
         self._body.append(new_pos)
-        if self.to_grow > 0:
+        if self.to_grow > 0:    # if we are growing
             self.to_grow -= 1
-        else:
+        elif self.to_grow < 0:  # if we are shrinking
+            self.to_grow += 1
+            self._body.pop(0)
+            self._body.pop(0)
+        else:                # if we are simply moving
             self._body.pop(0)
 
         self._direction = direction
@@ -188,7 +203,7 @@ class Game:
             # Update position
             snake.move(
                 self.map,
-                key2direction(snake.lastkey),
+                key2direction(snake.lastkey) if snake.lastkey in "wasd" and snake.lastkey != "" else snake.direction,
             )
 
         except AssertionError:
@@ -227,11 +242,25 @@ class Game:
                 self.kill_snake(name1)
 
             # check collisions with the food
-            if self.map.get_tile(snake1.head) == Tiles.FOOD:
-                self.map.eat_food(snake1.head)
-                snake1.score += 1
+            if self.map.get_tile(snake1.head) in [Tiles.FOOD, Tiles.SUPER]:
+                what_i_ate = self.map.eat_food(snake1.head)
+                if what_i_ate == Tiles.FOOD:
+                    logger.debug("Snake <%s> ate food", name1)
+                    snake1.score += 1
+                    snake1.grow()
+                elif what_i_ate == Tiles.SUPER:
+                    kind = random.choice([SuperFood.POINTS, SuperFood.LENGTH, SuperFood.RANGE])
+                    logger.debug("Snake <%s> ate <%s>", name1, kind.name)
+
+                    if kind == SuperFood.POINTS:
+                        snake1.score += random.randint(-5, 5)
+                    elif kind == SuperFood.LENGTH:
+                        extra = random.randint(-2,2)
+                        snake1.grow(extra)
+                        snake1.score += extra
+                    elif kind == SuperFood.RANGE:
+                        snake1.range = random.randint(1,5)
                 self.map.spawn_food()
-                snake1.grow()
 
     async def next_frame(self):
         await asyncio.sleep(1.0 / GAME_SPEED)
@@ -265,7 +294,14 @@ class Game:
             "level": self.map.level,
             "step": self._step,
             "timeout": self._timeout,
-            "snakes": {name: snake.body[::-1] for name, snake in self._snakes.items()},
+            "snakes": [
+                {
+                    "name": name,
+                    "body": snake.body[::-1],
+                    "sight": snake.sight(self.map, self._snakes.values()),
+                    "score": snake.score,  
+                } for name, snake in self._snakes.items()
+            ],
             "food": self.map.food,
         }
 

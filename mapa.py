@@ -1,6 +1,6 @@
 import logging
 import random
-from enum import IntEnum
+import math 
 
 from consts import Direction, Tiles, VITAL_SPACE
 
@@ -35,7 +35,7 @@ class Map:
 
     @property
     def food(self):
-        return self._food
+        return [(x,y, self.map[x][y].name) for x,y in self._food]
 
     def spawn_snake(self):
         x = random.randint(0, self.hor_tiles - 1)
@@ -49,13 +49,15 @@ class Map:
     def spawn_food(self):
         x = random.randint(0, self.hor_tiles - 1)
         y = random.randint(0, self.ver_tiles - 1)
-        self.map[x][y] = Tiles.FOOD
+        self.map[x][y] = random.choice( [Tiles.FOOD]*3 + [Tiles.SUPER]) # 3:1 ratio of food to superfood
         self._food.append((x, y))
 
     def eat_food(self, pos):
         x, y = pos
+        old = self.map[x][y]
         self.map[x][y] = Tiles.PASSAGE
         self._food.remove((x, y))
+        return old
 
     @property
     def hor_tiles(self):
@@ -88,6 +90,19 @@ class Map:
         x, y = pos
         return self.map[x][y]
 
+    def get_zone(self, pos: tuple[int, int], size: int):
+        zone: dict[int, dict[int, Tiles]] = {}
+        x, y = pos
+        for i in range(x-size, x+size+1):
+            for j in range(y-size, y+size+1):
+                if math.dist((x, y), (i, j)) <= size:
+                    ii = i % self.hor_tiles
+                    jj = j % self.ver_tiles
+                    if ii not in zone:
+                        zone[ii] = {}
+                    zone[ii][jj] = self.map[ii][jj]
+
+        return zone
 
     def is_blocked(self, pos, traverse):
         x, y = pos
@@ -100,7 +115,7 @@ class Map:
                 return False
             else:
                 return True
-        if self.map[x][y] == Tiles.FOOD:
+        if self.map[x][y] in [Tiles.FOOD, Tiles.SUPER]:
             return False
         
         assert False, "Unknown tile type"

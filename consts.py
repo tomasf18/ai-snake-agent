@@ -11,12 +11,17 @@ VITAL_SPACE = 3
 
 TIMEOUT = 3000
 
-
 class Tiles(IntEnum):
     PASSAGE = 0
     STONE = 1
     FOOD = 2
+    SUPER = 3
+    SNAKE = 4
 
+class SuperFood(IntEnum):
+    POINTS = 1
+    LENGTH = 2
+    RANGE = 3
 
 class Speed(IntEnum):
     SLOWEST = (1,)
