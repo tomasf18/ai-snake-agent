@@ -22,7 +22,7 @@ class Snake:
         self._direction: Direction = Direction.EAST
         self._history = deque(maxlen=HISTORY_LEN)
         self._score = 0
-        self._traverse = True  # if the snake can traverse walls TODO change to false
+        self._traverse = True      # if True, the snake can traverse rocks
         self._alive = True
         self.lastkey = ""
         self.to_grow = 1
@@ -247,6 +247,7 @@ class Game:
 
             # check collisions with the map
             if self.map.is_blocked(snake1.head, traverse=snake1._traverse):
+                logger.info("Snake <%s> has crashed against a wall/rock at %s", name1, snake1.head)
                 self.kill_snake(name1)
 
             # check collisions with the food
@@ -258,7 +259,7 @@ class Game:
                     snake1.grow()
                 elif what_i_ate == Tiles.SUPER:
                     kind = random.choice(
-                        [SuperFood.POINTS, SuperFood.LENGTH, SuperFood.RANGE]
+                        [SuperFood.POINTS, SuperFood.LENGTH, SuperFood.RANGE, SuperFood.TRAVERSE]
                     )
                     logger.debug("Snake <%s> ate <%s>", name1, kind.name)
 
@@ -270,6 +271,8 @@ class Game:
                         snake1.score += extra
                     elif kind == SuperFood.RANGE:
                         snake1.range = random.randint(1, 5)
+                    elif kind == SuperFood.TRAVERSE:
+                        snake1._traverse = not snake1._traverse
                 self.map.spawn_food()
 
     async def next_frame(self):
@@ -307,6 +310,8 @@ class Game:
                     "body": snake.body[::-1],
                     "sight": snake.sight(self.map, self._snakes.values()),
                     "score": snake.score,
+                    "range": snake.range,
+                    "traverse": snake._traverse,   
                 }
                 for name, snake in self._snakes.items()
             ],

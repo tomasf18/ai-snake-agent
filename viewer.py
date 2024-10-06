@@ -32,11 +32,13 @@ SNAKE_BODY = {
     "right_tail": (40, 0),
     "vertical": (2 * 40, 0),
     "horizontal": (2 * 40, 40),
+    "left_up": (5 * 40, 0),
+    "left_down": (5 * 40, 40),
+    "right_up": (6 * 40, 0),
+    "right_down": (6 * 40, 40),
 }
 
-STONE = (10 * 16, 0)
-
-CHAR_LENGTH = 20
+CHAR_LENGTH = 40
 CHAR_SIZE = CHAR_LENGTH, CHAR_LENGTH
 SCALE = 1
 
@@ -50,10 +52,7 @@ COLORS = {
     "grey": (120, 120, 120),
 }
 BACKGROUND_COLOR = (0, 0, 0)
-BACKGROUND_GROUND_LAYER = (222, 204, 166)
-BACKGROUND_MIDDLE_LAYER = (148, 91, 20)
-BACKGROUND_BOTTOM_LAYER = (112, 100, 84)
-BACKGROUND_BED_LAYER = (56, 29, 10)
+ROCK_COLOR = (222, 204, 166)
 
 
 RANKS = {
@@ -106,18 +105,11 @@ class Artifact(pygame.sprite.Sprite):
         self.image.fill((0, 0, 230))
         self.image.blit(*self.sprite)
         # self.image = pygame.transform.scale(self.image, scale((1, 1)))
-        self.image.set_colorkey((108, 7, 0))
+        self.image.set_alpha()
         self.x, self.y = pos
 
     def update(self, *args, **kw):
         self.update_sprite()
-
-
-class Rock(Artifact):
-    def __init__(self, *args, **kw):
-        self.sprite = (SPRITES, (0, 0), (*ROCK[0], *scale((1, 1))))
-        self.name = "rock"
-        super().__init__(*args, **kw)
 
 
 class Food(Artifact):
@@ -142,7 +134,7 @@ class Snake(Artifact):
         self.direction = "right"
         self.idx = kw.pop("idx")
 
-    def update(self, new_pos, sprite_id):
+    def update(self, new_pos, sprite_id, direction):
         if self.sprite_id != sprite_id:
             return
         x, y = scale(new_pos)
@@ -157,14 +149,11 @@ class Snake(Artifact):
             self.direction = "up"
 
         if sprite_id.endswith("_0"):
-            # self.sprite = (SPRITES, (0, 0), (*SNAKE[self.direction], *scale((1, 1))))
-            plain = pygame.Surface((CHAR_SIZE))  # TODO replace body
-            plain.fill((230, 0, 0))
-            self.sprite = (plain, (0, 0))
+            self.sprite = (SPRITES, (0, 0), (*SNAKE[self.direction], *scale((1, 1))))
         else:
-            plain = pygame.Surface((CHAR_SIZE))  # TODO replace body
-            plain.fill((0, 230, 0))
-            self.sprite = (plain, (0, 0))
+            dir = "horizontal" if self.direction in ["left", "right"] else "vertical"
+            self.sprite = (SPRITES, (0, 0), (*SNAKE_BODY[dir], *scale((1, 1))))
+
         self.update_sprite(tuple(new_pos))
 
 
@@ -184,22 +173,9 @@ def draw_background(mapa):
         for y in range(int(mapa.size[1])):
             wx, wy = scale((x, y))
             if mapa.map[x][y] == Tiles.STONE:
-                if y < mapa.ver_tiles / 4:
-                    pygame.draw.rect(
-                        background, BACKGROUND_GROUND_LAYER, (wx, wy, *scale((1, 1)))
-                    )
-                elif y < mapa.ver_tiles / 2:
-                    pygame.draw.rect(
-                        background, BACKGROUND_MIDDLE_LAYER, (wx, wy, *scale((1, 1)))
-                    )
-                elif y < mapa.ver_tiles * 3 / 4:
-                    pygame.draw.rect(
-                        background, BACKGROUND_BOTTOM_LAYER, (wx, wy, *scale((1, 1)))
-                    )
-                else:
-                    pygame.draw.rect(
-                        background, BACKGROUND_BED_LAYER, (wx, wy, *scale((1, 1)))
-                    )
+                pygame.draw.rect(
+                    background, ROCK_COLOR, (wx, wy, *scale((1, 1)))
+                )
             else:
                 pygame.draw.rect(background, BACKGROUND_COLOR, (wx, wy, *scale((1, 1))))
     return background
@@ -312,9 +288,7 @@ async def main_game():
 
         if "snakes" in state:
             for snake in state["snakes"]:
-                import pprint
 
-                pprint.pprint(snake)
                 for idx, snake_body_part in enumerate(snake["body"]):
                     if f"{snake['name']}_{idx}" not in [
                         s.sprite_id for s in main_group.sprites()
@@ -327,8 +301,12 @@ async def main_game():
                             )
                         )
                     else:
+                        x, y = snake_body_part
+ 
+                        direction = "right"
+
                         main_group.update(
-                            snake_body_part, sprite_id=f"{snake['name']}_{idx}"
+                            snake_body_part, sprite_id=f"{snake['name']}_{idx}", direction=direction
                         )
 
         if "food" in state:
@@ -352,11 +330,6 @@ async def main_game():
 
         if "highscores" in state:
             highscores = state["highscores"]
-
-            if (f"<{state['player']}>", state["score"]) not in highscores:
-                highscores.append((f"<{state['player']}>", state["score"]))
-            highscores = sorted(highscores, key=lambda s: s[1], reverse=True)[:-1]
-            highscores = highscores[: len(RANKS)]
 
             HIGHSCORES = pygame.Surface(scale((20, 16)))
             HIGHSCORES.fill(COLORS["grey"])
@@ -400,8 +373,10 @@ async def main_game():
         pygame.display.flip()
 
         try:
+
             state = json.loads(q.get_nowait())
-            print(state)
+            import pprint
+            pprint.pprint(state)
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(1.0 / GAME_SPEED)
             continue

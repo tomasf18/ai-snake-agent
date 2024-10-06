@@ -24,6 +24,7 @@ class SuperFood(IntEnum):
     POINTS = 1
     LENGTH = 2
     RANGE = 3
+    TRAVERSE = 4
 
 
 class Speed(IntEnum):

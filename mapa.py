@@ -28,7 +28,15 @@ class Map:
             logger.info("Generating a MAP")
             self.map = [[Tiles.PASSAGE] * self.ver_tiles for _ in range(self.hor_tiles)]
 
-            # TODO: create rocks
+            # add rocks
+            for _ in range(10):
+                x, y = random.randint(0, self.hor_tiles - 1), random.randint(
+                    0, self.ver_tiles - 1
+                )
+                self.map[x][y] = Tiles.STONE
+                self._rocks.append((x, y))
+
+
         else:
             logger.info("Loading MAP")
             self.map = mapa
