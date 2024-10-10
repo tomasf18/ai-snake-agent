@@ -190,6 +190,8 @@ class Game:
             player_name: Snake(player_name, *self.map.spawn_snake())
             for player_name in players_names
         }
+        self.map.spawn_food()
+
 
     def stop(self):
         logger.info("GAME OVER")
@@ -282,14 +284,14 @@ class Game:
             logger.info("Waiting for player 1")
             return
 
-        if self.map.food == []:
-            self.map.spawn_food()
-
         self._step += 1
         if self._step == self._timeout:
             self.stop()
 
         if self._step % 100 == 0:
+            self.map.spawn_food(Tiles.SUPER)
+            logger.debug("Super food spawned at %s", self.map.food[-1])
+
             for name, snake in self._snakes.items():
                 logger.debug(f"[{self._step}] SCORE {name}: {snake.score}")
 

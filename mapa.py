@@ -54,12 +54,13 @@ class Map:
         self._snake_nests.append((x, y))
         return x, y
 
-    def spawn_food(self):
+    def spawn_food(self, food_type=Tiles.FOOD):
         x = random.randint(0, self.hor_tiles - 1)
         y = random.randint(0, self.ver_tiles - 1)
-        self.map[x][y] = random.choice(
-            [Tiles.FOOD] * 3 + [Tiles.SUPER]
-        )  # 3:1 ratio of food to superfood
+        while (x, y) in self._food or (x, y) in self._food:
+            x = random.randint(0, self.hor_tiles - 1)
+            y = random.randint(0, self.ver_tiles - 1)
+        self.map[x][y] = food_type
         self._food.append((x, y))
 
     def eat_food(self, pos):
