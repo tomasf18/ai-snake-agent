@@ -57,7 +57,7 @@ class Map:
     def spawn_food(self, food_type=Tiles.FOOD):
         x = random.randint(0, self.hor_tiles - 1)
         y = random.randint(0, self.ver_tiles - 1)
-        while (x, y) in self._food or (x, y) in self._food:
+        while (x, y) in self._food or (x, y) in self._rocks:
             x = random.randint(0, self.hor_tiles - 1)
             y = random.randint(0, self.ver_tiles - 1)
         self.map[x][y] = food_type
