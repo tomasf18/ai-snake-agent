@@ -259,6 +259,7 @@ class Game:
                     logger.debug("Snake <%s> ate food", name1)
                     snake1.score += 1
                     snake1.grow()
+                    self.map.spawn_food()
                 elif what_i_ate == Tiles.SUPER:
                     kind = random.choice(
                         [SuperFood.POINTS, SuperFood.LENGTH, SuperFood.RANGE, SuperFood.TRAVERSE]
@@ -275,7 +276,6 @@ class Game:
                         snake1.range = random.randint(1, 5)
                     elif kind == SuperFood.TRAVERSE:
                         snake1._traverse = not snake1._traverse
-                self.map.spawn_food()
 
     async def next_frame(self):
         await asyncio.sleep(1.0 / GAME_SPEED)
@@ -290,7 +290,6 @@ class Game:
 
         if self._step % 100 == 0:
             self.map.spawn_food(Tiles.SUPER)
-            logger.debug("Super food spawned at %s", self.map.food[-1])
 
             for name, snake in self._snakes.items():
                 logger.debug(f"[{self._step}] SCORE {name}: {snake.score}")

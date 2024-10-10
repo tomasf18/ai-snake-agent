@@ -62,6 +62,8 @@ class Map:
             y = random.randint(0, self.ver_tiles - 1)
         self.map[x][y] = food_type
         self._food.append((x, y))
+        logger.debug("Food spawned at %s", self._food[-1])
+
 
     def eat_food(self, pos):
         x, y = pos
