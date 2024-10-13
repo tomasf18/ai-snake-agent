@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 
+from consts import Tiles
 import pygame
 import websockets
 
@@ -15,8 +16,8 @@ logger_websockets.setLevel(logging.WARN)
 logger = logging.getLogger("Viewer")
 logger.setLevel(logging.DEBUG)
 
-from viewer.common import Directions, Food, Snake, ScoreBoard, get_direction
-from viewer.sprites import SnakeSprite, FoodSprite, ScoreBoardSprite
+from viewer.common import Directions, Food, Snake, Stone, ScoreBoard, get_direction
+from viewer.sprites import SnakeSprite, FoodSprite, StoneSprite, ScoreBoardSprite
 
 
 async def main_loop(q):
@@ -33,12 +34,19 @@ async def main(SCALE=32):
     new_game = True
     GAME_SPEED = newgame_json["fps"]
     WIDTH, HEIGHT = newgame_json["size"]
+    MAP = newgame_json["map"]
 
     display = pygame.display.set_mode((SCALE * WIDTH, SCALE * HEIGHT))
 
     all_sprites = pygame.sprite.Group()
     food_sprites = pygame.sprite.Group()
     prev_foods = None
+
+    for x, col in enumerate(MAP):
+        for y, line in enumerate(col):
+            if MAP[x][y] == Tiles.STONE:
+                print(f"Stone at {x}, {y}")
+                all_sprites.add(StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE))
 
     while True:
         for event in pygame.event.get():
@@ -69,9 +77,7 @@ async def main(SCALE=32):
 
             if "snakes" in state and "food" in state:
                 snakes_update = state["snakes"]
-                if new_game:
-                    foods_update = state["food"]
-                prev_foods = foods_update
+                foods_update = state["food"]
                 foods_update = state["food"]
             else:
                 print("Show SCOREBOARD")
@@ -80,6 +86,20 @@ async def main(SCALE=32):
             await asyncio.sleep(1.0 / GAME_SPEED)
             continue
 
+        # Update Foods
+        if new_game or prev_foods != foods_update:
+            food_sprites.empty()
+
+            foods = {
+                f"{food}": Food(pos=(food[0], food[1]), is_super=food[2] == "SUPER")
+                for food in foods_update
+            }
+            food_sprites.add(
+                [FoodSprite(food, WIDTH, HEIGHT, SCALE) for food in foods.values()]
+            )
+            prev_foods = foods_update
+
+        # Update Snakes
         if new_game:
             snakes = {
                 snake["name"]: Snake(body=snake["body"], direction=Directions.RIGHT)
@@ -98,14 +118,6 @@ async def main(SCALE=32):
                 snakes[snake["name"]].direction = get_direction(
                     head[0], head[1], neck[0], neck[1], HEIGHT=HEIGHT, WIDTH=WIDTH
                 )
-
-        if prev_foods != foods_update:
-            print("FOODS UPDATE")
-            food_sprites.empty()
-            foods = {f"{food}": Food(pos=(food[0], food[1])) for food in foods_update}
-            food_sprites.add(
-                [FoodSprite(food, WIDTH, HEIGHT, SCALE) for food in foods.values()]
-            )
 
 
 async def messages_handler(ws_path, queue):

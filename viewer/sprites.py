@@ -1,7 +1,7 @@
 import pygame
 
 from .spritesheet import SpriteSheet
-from .common import Directions, Snake, Food, ScoreBoard, get_direction
+from .common import Directions, Snake, Food, Stone, ScoreBoard, get_direction
 
 CELL_SIZE = 64
 
@@ -25,17 +25,48 @@ class ScoreBoardSprite(pygame.sprite.Sprite):
             )
 
 
+class StoneSprite(pygame.sprite.Sprite):
+    def __init__(self, stone: Stone, WIDTH, HEIGHT, SCALE):
+        super().__init__()
+
+        self.stone = stone
+        self.SCALE = SCALE
+
+        rect = pygame.Rect((0, 3 * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        self.stone_image = pygame.Surface(rect.size)
+        self.stone_image = pygame.transform.scale(self.stone_image, (SCALE, SCALE))
+
+        self.stone_image.fill("black")
+
+        self.image = pygame.Surface([WIDTH * SCALE, HEIGHT * SCALE])
+        self.rect = self.image.get_rect()
+        self.update()
+
+    def update(self):
+        self.image.fill("white")
+        self.image.set_colorkey("white")
+
+        # Render Stone
+        self.image.blit(
+            self.stone_image,
+            (self.SCALE * self.stone.pos[0], self.SCALE * self.stone.pos[1]),
+        )
+
+
 class FoodSprite(pygame.sprite.Sprite):
     def __init__(self, food: Food, WIDTH, HEIGHT, SCALE):
         super().__init__()
 
-        SNAKE_SPRITESHEET = SpriteSheet("data/snake-graphics.png")
+        if food.is_super:
+            FOOD_SPRITESHEET = SpriteSheet("data/snake-graphics-bw.png")
+        else:
+            FOOD_SPRITESHEET = SpriteSheet("data/snake-graphics.png")
 
         self.food = food
         self.SCALE = SCALE
 
         food_image_rect = (0, 3 * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-        self.food_image = SNAKE_SPRITESHEET.image_at(food_image_rect, -1)
+        self.food_image = FOOD_SPRITESHEET.image_at(food_image_rect, -1)
         self.food_image = pygame.transform.scale(self.food_image, (SCALE, SCALE))
 
         self.image = pygame.Surface([WIDTH * SCALE, HEIGHT * SCALE])

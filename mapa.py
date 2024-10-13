@@ -36,7 +36,6 @@ class Map:
                 self.map[x][y] = Tiles.STONE
                 self._rocks.append((x, y))
 
-
         else:
             logger.info("Loading MAP")
             self.map = mapa
@@ -63,7 +62,6 @@ class Map:
         self.map[x][y] = food_type
         self._food.append((x, y))
         logger.debug("Food spawned at %s", self._food[-1])
-
 
     def eat_food(self, pos):
         x, y = pos

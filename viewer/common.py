@@ -18,6 +18,12 @@ class Directions(Enum):
 @dataclass
 class Food:
     pos: tuple
+    is_super: bool
+
+
+@dataclass
+class Stone:
+    pos: tuple
 
 
 @dataclass
