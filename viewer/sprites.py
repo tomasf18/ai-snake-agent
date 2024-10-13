@@ -1,7 +1,7 @@
 import pygame
 
-from spritesheet import SpriteSheet
-from common import Directions, Snake, Food, ScoreBoard, get_direction
+from .spritesheet import SpriteSheet
+from .common import Directions, Snake, Food, ScoreBoard, get_direction
 
 CELL_SIZE = 64
 
@@ -29,7 +29,7 @@ class FoodSprite(pygame.sprite.Sprite):
     def __init__(self, food: Food, WIDTH, HEIGHT, SCALE):
         super().__init__()
 
-        SNAKE_SPRITESHEET = SpriteSheet("snake-graphics.png")
+        SNAKE_SPRITESHEET = SpriteSheet("data/snake-graphics.png")
 
         self.food = food
         self.SCALE = SCALE
@@ -57,7 +57,7 @@ class SnakeSprite(pygame.sprite.Sprite):
     def __init__(self, snake: Snake, WIDTH, HEIGHT, SCALE):
         super().__init__()
 
-        SNAKE_SPRITESHEET = SpriteSheet("snake-graphics.png")
+        SNAKE_SPRITESHEET = SpriteSheet("data/snake-graphics.png")
 
         self.snake = snake
         self.HEIGHT = HEIGHT
