@@ -5,7 +5,7 @@ import math
 from consts import Direction, Tiles, VITAL_SPACE
 
 logger = logging.getLogger("Map")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 class Map:
@@ -33,8 +33,13 @@ class Map:
                 x, y = random.randint(0, self.hor_tiles - 1), random.randint(
                     0, self.ver_tiles - 1
                 )
-                self.map[x][y] = Tiles.STONE
-                self._rocks.append((x, y))
+                wall_length = 5
+                for yy in range(y, (y + random.choice([-wall_length, wall_length])) % self.ver_tiles)[:wall_length]:
+                    self.map[x][yy] = Tiles.STONE
+                    self._rocks.append((x, yy))
+                for xx in range(x, (x + random.choice([-wall_length, wall_length])) % self.hor_tiles)[:wall_length]:
+                    self.map[xx][y] = Tiles.STONE
+                    self._rocks.append((xx, y))
 
         else:
             logger.info("Loading MAP")
@@ -119,6 +124,7 @@ class Map:
         if not traverse and (
             x not in range(self.hor_tiles) or y not in range(self.ver_tiles)
         ):
+            logger.debug("Crash against map edge(%s, %s)", x, y)
             return True
         if self.map[x][y] == Tiles.PASSAGE:
             return False
@@ -126,6 +132,7 @@ class Map:
             if traverse:
                 return False
             else:
+                logger.debug("Crash against Stone(%s, %s)", x, y)
                 return True
         if self.map[x][y] in [Tiles.FOOD, Tiles.SUPER]:
             return False
@@ -158,6 +165,7 @@ class Map:
 
         # test blocked
         if self.is_blocked(npos, traverse):
+            logger.debug("%s is blocked", npos)
             return cur
 
         return npos
