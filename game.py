@@ -40,6 +40,7 @@ class Snake:
 
     def grow(self, amount=1):
         self.to_grow += amount
+        self.to_grow = max(- len(self._body) + 1, self.to_grow)
 
     @property
     def head(self):
