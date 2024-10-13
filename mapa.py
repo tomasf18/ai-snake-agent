@@ -20,7 +20,7 @@ class Map:
 
         self._level = level
         self._size = size
-        self._rocks = []
+        self._stones = []
         self._food = []
         self._snake_nests = []
 
@@ -28,7 +28,7 @@ class Map:
             logger.info("Generating a MAP")
             self.map = [[Tiles.PASSAGE] * self.ver_tiles for _ in range(self.hor_tiles)]
 
-            # add rocks
+            # add stones
             for _ in range(10):
                 x, y = random.randint(0, self.hor_tiles - 1), random.randint(
                     0, self.ver_tiles - 1
@@ -36,10 +36,10 @@ class Map:
                 wall_length = 5
                 for yy in range(y, (y + random.choice([-wall_length, wall_length])) % self.ver_tiles)[:wall_length]:
                     self.map[x][yy] = Tiles.STONE
-                    self._rocks.append((x, yy))
+                    self._stones.append((x, yy))
                 for xx in range(x, (x + random.choice([-wall_length, wall_length])) % self.hor_tiles)[:wall_length]:
                     self.map[xx][y] = Tiles.STONE
-                    self._rocks.append((xx, y))
+                    self._stones.append((xx, y))
 
         else:
             logger.info("Loading MAP")
@@ -61,7 +61,7 @@ class Map:
     def spawn_food(self, food_type=Tiles.FOOD):
         x = random.randint(0, self.hor_tiles - 1)
         y = random.randint(0, self.ver_tiles - 1)
-        while (x, y) in self._food or (x, y) in self._rocks:
+        while (x, y) in self._food or (x, y) in self._stones:
             x = random.randint(0, self.hor_tiles - 1)
             y = random.randint(0, self.ver_tiles - 1)
         self.map[x][y] = food_type
