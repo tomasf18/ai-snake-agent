@@ -1,0 +1,21 @@
+highscores.json
+
+*.pyc
+__pycache__
+
+venv/
+.venv/
+
+# Editors
+*~
+*.swp
+.vs/
+.vscode/
+.idea/
+
+# Windows prebuilt external libraries
+/prebuilt-x??
+/prebuilt_downloads
+
+# macOS generated files
+.DS_Store
