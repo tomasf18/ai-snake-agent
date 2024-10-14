@@ -282,7 +282,7 @@ class Game:
                         snake1.grow(extra)
                         snake1.score += extra
                     elif kind == SuperFood.RANGE:
-                        snake1.range = random.randint(1, 5)
+                        snake1.range = random.randint(2, 5)
                     elif kind == SuperFood.TRAVERSE:
                         snake1._traverse = not snake1._traverse
 
