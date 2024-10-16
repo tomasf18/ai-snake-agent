@@ -1,13 +1,17 @@
 from tree_search import *
+from Directions import DIRECTION
 from snake import Snake
-DIRECTIONS = [ (1, 0), (-1, 0), (0, 1), (0, -1) ] # right, left, up, down
+
+FREE = 0
+WALL = 1
+FOOD = 2
 
 class SnakeDomain(SearchDomain):    
     def __init__(self, map: dict):
         self.dim: tuple[int, int] = tuple(map["size"])
         self.board: list[list[int]] = map["map"]
 
-    def actions(self, current_position):
+    def actions(self, state) -> list[DIRECTION]:
         """
             Podemos ir na direçao com espaços vazios
             [
@@ -16,41 +20,61 @@ class SnakeDomain(SearchDomain):
                 X B X
             ]
         """
-        actlist = []
-        for dir in DIRECTIONS:
-            checkbox = [current_position[0] + dir[0], current_position[1] + dir[1]]
-            if checkbox in self.snake.body:
-                continue
+        snake_body = state["snake_body"]
+        snake_traverse = state["snake_traverse"]
 
-            if self.snake.transverse or \
-                self.board[checkbox[0]][checkbox[1]] == 0:
-                actlist.append(checkbox)
+        actlist: list[DIRECTION] = []
+        snake_head = snake_body[0]
+        for dir in DIRECTION:
+            new_position = [snake_head[0] + dir.dir[0], snake_head[1] + dir.dir[1]]
+            
+            if new_position in snake_body:
+                continue
+            
+            if snake_traverse or self.board[new_position[0]][new_position[1]] == WALL:
+                actlist.append(dir)
 
         return actlist
 
 
-    def result(self, current_position, action):
-        return action
-    
-    # def result(self, state, action):
-    #     if all(pc in state for pc in action.pc):
-    #         newstate = [s for s in state if s not in action.neg]
-    #         # Do estado atual, nao quero as que nao ajudam a ir na direçao
-    #         # E quero as que ajudam
-    #         newstate.extend(action.pos)
-    #         return set(newstate)
+    def result(self, state, action):
+        snake_body = state["snake_body"]
+        
+        head = snake_body[0]
+           
+        snake_body[0:0] = [action + head]
+        if self.board[head[0]][head[1]] != FOOD:
+            snake_body.pop()
+        
+        return { 
+            "snake_body": snake_body, 
+            "snake_traverse": state["snake_traverse"]
+        }
 
-    def cost(self, square, action):
+    def cost(self, state, action):
         return 1
 
-    def heuristic(self, current_position, food_position):
-        return abs((current_position[0] - food_position[0])) + abs((current_position[1] - food_position[1]))
+    def heuristic(self, new_state, goal):
+        snake_head = new_state["snake_body"][0]
+        return abs((snake_head[0] - goal[0])) + \
+               abs((snake_head[1] - goal[1]))
 
-    def satisfies(self, current_position, food_position):
-        return food_position == current_position
+    def satisfies(self, state, goal):
+        snake_head = state["snake_body"][0]
+        return goal == snake_head
 
-    def get_next_move(self) -> str:
-        p = SearchProblem(self, self.snake.head, self.snake.food_position)
-        t = SearchTree(p, "a*")
-        t.search()
-        return t.get_path()[0]
+    def get_next_move(self, snake: Snake) -> str:
+        state = {
+            "snake_body": snake.snake,
+            "snake_traverse" : snake.snake_traverse,
+        }
+        
+        print("DEBUG: ", state)
+        
+        problem = SearchProblem(self, state, snake.food_position)
+        print("DEBUG: ", problem.initial, problem.goal)
+        tree = SearchTree(problem, "a*")
+        result = tree.search()
+        if result is None:
+            raise Exception("No solution found")
+        return tree.plan()[0]

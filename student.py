@@ -17,7 +17,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         print(map_info)
         
         snake: Snake = Snake()
-        domain: SnakeDomain = SnakeDomain(map = map_info, snake = snake)
+        domain: SnakeDomain = SnakeDomain(map = map_info)
 
 
         while True:
@@ -26,10 +26,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(state)
                 snake.update(state)
                 
-                key = snake.get_next_move()
+                key = domain.get_next_move(snake=snake)
 
                 await websocket.send(
-                    json.dumps({"cmd": "key", "key": key})
+                    json.dumps({"cmd": "key", "key": key.key})
                 )  # send the key command to the server
                 
             except websockets.exceptions.ConnectionClosedOK:

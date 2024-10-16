@@ -143,9 +143,12 @@ class SearchTree:
     # procurar a solucao
     def search(self, limit=None):
         while self.open_nodes != []:
+            print("Open nodes:", [node.state for node in self.open_nodes])
             node = self.open_nodes.pop(0)
+            print("Current node being explored:", node.state)
             if self.problem.goal_test(node.state):
                 self.solution = node
+                print("Goal found:", node.state)
                 return self.get_path(node)
             lnewnodes = []
             self.non_terminals += 1
@@ -155,7 +158,9 @@ class SearchTree:
 
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
+                print(f"Action: {a}, New state: {newstate}")
                 if node.in_parent(newstate):
+                    print(f"State {newstate} is already in the parent chain, skipping.")
                     continue
 
                 cost = node.cost + self.problem.domain.cost(node.state, a)
@@ -165,6 +170,7 @@ class SearchTree:
                     cost,
                     self.problem.domain.heuristic(newstate, self.problem.goal),
                 )
+                print(f"Generated node: State: {newstate}, Cost: {cost}, Heuristic: {newnode.heuristic}")
                 lnewnodes.append(newnode)
 
                 self.sum_depths += newnode.depth
