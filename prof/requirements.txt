@@ -1,0 +1,4 @@
+Flask
+flask-marshmallow
+Flask-SQLAlchemy
+flask_limiter
