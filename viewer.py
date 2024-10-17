@@ -28,9 +28,8 @@ async def main_loop(q):
 def should_quit():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.display.quit()
             pygame.quit()
-            sys.exit(0)
+            raise SystemExit
 
 
 async def main(SCALE=32):
