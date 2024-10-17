@@ -276,13 +276,13 @@ class Game:
                     logger.debug("Snake <%s> ate <%s>", name1, kind.name)
 
                     if kind == SuperFood.POINTS:
-                        snake1.score += random.randint(-5, 5)
+                        snake1.score += random.randint(-5, 10)
                     elif kind == SuperFood.LENGTH:
                         extra = random.randint(-2, 2)
                         snake1.grow(extra)
                         snake1.score += extra
                     elif kind == SuperFood.RANGE:
-                        snake1.range = random.randint(2, 5)
+                        snake1.range = random.randint(2, 6)
                     elif kind == SuperFood.TRAVERSE:
                         snake1._traverse = not snake1._traverse
 
