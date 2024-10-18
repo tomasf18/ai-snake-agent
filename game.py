@@ -237,7 +237,9 @@ class Game:
         ):  # if game is not running, we don't need to check collisions
             return
 
-        for name1, snake1 in self._snakes.items() if snake1.alive:
+        for name1, snake1 in self._snakes.items():
+            if not snake1.alive:
+                continue
             # check collisions between snakes
             for name2, snake2 in self._snakes.items():
                 if name1 != name2 and snake2.collision(snake1.head) and snake2.alive:
