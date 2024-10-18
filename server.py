@@ -87,19 +87,26 @@ class GameServer:
         if highscores:
             game_info["highscores"] = self._highscores
 
+        to_remove = []
+
         for viewer in self.viewers:
             try:
                 await viewer.send(json.dumps(game_info))
             except Exception:
-                self.viewers.remove(viewer)
                 viewer.close()
+        for viewer in to_remove:
+            self.viewers.remove(viewer)
+
+        to_remove = []
 
         for ws, player in self.game_player.items():
             try:
                 await ws.send(json.dumps(game_info))
             except Exception:
-                self.game_player.pop(ws)
+                to_remove.append(ws)
                 await ws.close()
+        for ws in to_remove:
+            self.game_player.pop(ws)
 
     async def incomming_handler(self, websocket: WebSocketCommonProtocol, path: str):
         """Process new clients arriving at the server."""
