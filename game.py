@@ -166,7 +166,6 @@ class Game:
         self._state = {}
         self._snakes = {}
         self.map = Map(size=size)
-        self.respawn = False
 
     @property
     def snakes(self):
@@ -225,8 +224,6 @@ class Game:
         return True
 
     def kill_snake(self, name):
-        if self.respawn:  # we are already dead, no need to kill again
-            return
         logger.info("[step=%s] Snake <%s> has died", self._step, name)
         self._snakes[name].kill()
 
@@ -240,10 +237,10 @@ class Game:
         ):  # if game is not running, we don't need to check collisions
             return
 
-        for name1, snake1 in self._snakes.items():
+        for name1, snake1 in self._snakes.items() if snake1.alive:
             # check collisions between snakes
             for name2, snake2 in self._snakes.items():
-                if name1 != name2 and snake2.collision(snake1.head):
+                if name1 != name2 and snake2.collision(snake1.head) and snake2.alive:
                     self.kill_snake(name1)
                     snake2.score += KILL_SNAKE_POINTS
 
@@ -304,9 +301,9 @@ class Game:
                 logger.debug(f"[{self._step}] SCORE {name}: {snake.score}")
 
         for name, snake in self._snakes.items():
-            self.update_snake(name)
             if not snake.alive:
-                self.kill_snake(name)
+                continue
+            self.update_snake(name)
 
         self.collision()
 
@@ -323,10 +320,13 @@ class Game:
                     "range": snake.range,
                     "traverse": snake._traverse,
                 }
-                for name, snake in self._snakes.items()
+                for name, snake in self._snakes.items() if snake.alive
             ],
             "food": self.map.food,
         }
+
+        if all([not snake.alive for snake in self._snakes.values()]):
+            self.stop()
 
         return self._state
 
