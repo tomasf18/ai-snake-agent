@@ -5,6 +5,28 @@ from .common import Directions, Snake, Food, Stone, ScoreBoard, get_direction
 
 CELL_SIZE = 64
 
+class GameStateSprite(pygame.sprite.Sprite):
+    def __init__(self, player: Snake, pos: int, WIDTH, HEIGHT, SCALE):
+        self.font = pygame.font.Font(None, 32)
+        super().__init__()
+
+        self.player = player
+        self.pos = pos
+        self.image = pygame.Surface([WIDTH * SCALE, (self.pos+1) * SCALE])
+        self.image.set_colorkey("white")
+        self.rect = self.image.get_rect()
+        self.SCALE = SCALE
+
+    def update(self):
+        self.image.fill("white")
+        self.image.set_colorkey("white")
+
+        traverse = "[T]" if self.player.traverse else ""
+
+        self.image.blit(
+            self.font.render(f"{self.player.name} {traverse}: {self.player.score}", True, "green", "white"),
+            (0, self.pos * self.SCALE),
+        )
 
 class ScoreBoardSprite(pygame.sprite.Sprite):
     def __init__(self, scoreboard, WIDTH, HEIGHT, SCALE):

@@ -18,7 +18,7 @@ logger = logging.getLogger("Viewer")
 logger.setLevel(logging.DEBUG)
 
 from viewer.common import Directions, Food, Snake, Stone, ScoreBoard, get_direction
-from viewer.sprites import SnakeSprite, FoodSprite, StoneSprite, ScoreBoardSprite
+from viewer.sprites import GameStateSprite, SnakeSprite, FoodSprite, StoneSprite, ScoreBoardSprite
 
 
 async def main_loop(q):
@@ -53,6 +53,7 @@ async def main(SCALE=32):
     display = pygame.display.set_mode((SCALE * WIDTH, SCALE * HEIGHT))
 
     all_sprites = pygame.sprite.Group()
+    snake_sprites = pygame.sprite.Group()
     food_sprites = pygame.sprite.Group()
     prev_foods = None
 
@@ -97,13 +98,18 @@ async def main(SCALE=32):
         # Update Snakes
         if new_game:
             snakes = {
-                snake["name"]: Snake(body=snake["body"], direction=Directions.RIGHT)
+                snake["name"]: Snake(body=snake["body"], direction=Directions.RIGHT, score=snake["score"], name=snake["name"], traverse=snake["traverse"])
                 for snake in snakes_update
             }
 
             all_sprites.add(
+                [GameStateSprite(snake, i, WIDTH, HEIGHT, SCALE) for i, snake in enumerate(snakes.values())]
+            )
+
+            snake_sprites.add(
                 [SnakeSprite(snake, WIDTH, HEIGHT, SCALE) for snake in snakes.values()]
             )
+
             new_game = False
         else:
             for snake in snakes_update:
@@ -113,17 +119,26 @@ async def main(SCALE=32):
                 snakes[snake["name"]].direction = get_direction(
                     head[0], head[1], neck[0], neck[1], HEIGHT=HEIGHT, WIDTH=WIDTH
                 )
+                snakes[snake["name"]].score = snake["score"]
+                snakes[snake["name"]].traverse = snake["traverse"]
+
+            # Remove dead snakes
+            for snake in snakes.values():
+                if snake.name not in [s["name"] for s in snakes_update]:
+                    snake_sprites.remove([s for s in snake_sprites if s.snake.name == snake.name])
 
         # Render Window
         display.fill("white")
 
         try:
             all_sprites.update()
+            snake_sprites.update()
             food_sprites.update()
         except Exception as e:
             logging.error(e)
         food_sprites.draw(display)
         all_sprites.draw(display)
+        snake_sprites.draw(display)
 
         # update window
         pygame.display.flip()

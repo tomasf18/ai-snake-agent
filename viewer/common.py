@@ -30,6 +30,9 @@ class Stone:
 class Snake:
     body: list
     direction: Directions
+    score: int
+    name: str
+    traverse: bool
 
 
 @dataclass
