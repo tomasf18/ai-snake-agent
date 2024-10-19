@@ -66,12 +66,8 @@ async def main(SCALE):
     all_sprites = pygame.sprite.Group()
     snake_sprites = pygame.sprite.Group()
     food_sprites = pygame.sprite.Group()
+    stone_sprites = pygame.sprite.Group()
     prev_foods = None
-
-    for x, col in enumerate(MAP):
-        for y, line in enumerate(col):
-            if MAP[x][y] == Tiles.STONE:
-                all_sprites.add(StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE))
 
     while True:
         should_quit()
@@ -95,6 +91,9 @@ async def main(SCALE):
                         SCALE,
                     )
                 )
+            else:
+                new_game = True
+                
 
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(0.1 / GAME_SPEED)
@@ -113,8 +112,20 @@ async def main(SCALE):
             )
             prev_foods = foods_update
 
-        # Update Snakes
+        # Update Stones
         if new_game:
+            for x, col in enumerate(MAP):
+                for y, pos in enumerate(col):
+                    if pos == Tiles.STONE:
+                        stone_sprites.add(StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE))
+
+        # Update Snakes
+        if new_game or not all(
+            [snake["name"] in [s.name for s in snakes.values()] for snake in snakes_update]
+        ):
+            all_sprites.empty()
+            snake_sprites.empty()
+
             snakes = {
                 snake["name"]: Snake(
                     body=snake["body"],
@@ -137,7 +148,6 @@ async def main(SCALE):
                 [SnakeSprite(snake, WIDTH, HEIGHT, SCALE) for snake in snakes.values()]
             )
 
-            new_game = False
         else:
             for snake in snakes_update:
                 snakes[snake["name"]].body = snake["body"]
@@ -156,6 +166,8 @@ async def main(SCALE):
                         [s for s in snake_sprites if s.snake.name == snake.name]
                     )
 
+        new_game = False
+
         # Render Window
         display.fill("white")
 
@@ -163,8 +175,10 @@ async def main(SCALE):
             all_sprites.update()
             snake_sprites.update()
             food_sprites.update()
+            stone_sprites.update()
         except Exception as e:
             logging.error(e)
+        stone_sprites.draw(display)
         food_sprites.draw(display)
         all_sprites.draw(display)
         snake_sprites.draw(display)
