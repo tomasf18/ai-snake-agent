@@ -93,7 +93,6 @@ async def main(SCALE):
                 )
             else:
                 new_game = True
-                
 
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(0.1 / GAME_SPEED)
@@ -117,11 +116,16 @@ async def main(SCALE):
             for x, col in enumerate(MAP):
                 for y, pos in enumerate(col):
                     if pos == Tiles.STONE:
-                        stone_sprites.add(StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE))
+                        stone_sprites.add(
+                            StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE)
+                        )
 
         # Update Snakes
         if new_game or not all(
-            [snake["name"] in [s.name for s in snakes.values()] for snake in snakes_update]
+            [
+                snake["name"] in [s.name for s in snakes.values()]
+                for snake in snakes_update
+            ]
         ):
             all_sprites.empty()
             snake_sprites.empty()
@@ -207,7 +211,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--port", help="TCP port", type=int, default=PORT)
     args = parser.parse_args()
-    SCALE = 32 * (1/args.scale)
+    SCALE = 32 * (1 / args.scale)
 
     LOOP = asyncio.get_event_loop()
     pygame.init()

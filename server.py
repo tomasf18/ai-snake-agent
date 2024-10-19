@@ -118,7 +118,7 @@ class GameServer:
                     if path == "/viewer":
                         logger.info("Viewer connected")
                         self.viewers.add(websocket)
-                    
+
                     if self.game.running:
                         game_info = self.game.info()
                         await websocket.send(json.dumps(game_info))
@@ -181,11 +181,13 @@ class GameServer:
                             try:
                                 await player.ws.send(json.dumps(state))
                             except Exception as e:
-                                logger.error("Player <%s> disconnected, could not send state", player.name)
+                                logger.error(
+                                    "Player <%s> disconnected, could not send state",
+                                    player.name,
+                                )
                                 game_players.remove(player)
 
-
-                game_over = {"highscores": self.save_highscores() }
+                game_over = {"highscores": self.save_highscores()}
                 await self.send_clients(self.viewers, game_over)
                 await self.send_clients(self.game_player, game_over)
 
