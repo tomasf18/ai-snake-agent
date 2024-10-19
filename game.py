@@ -310,6 +310,7 @@ class Game:
         self.collision()
 
         self._state = {
+            "food": self.map.food, 
             "players": [snake for snake in self._snakes],
             "step": self._step,
             "timeout": self._timeout,

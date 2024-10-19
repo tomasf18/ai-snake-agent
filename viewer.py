@@ -60,7 +60,6 @@ async def main(SCALE=32):
     for x, col in enumerate(MAP):
         for y, line in enumerate(col):
             if MAP[x][y] == Tiles.STONE:
-                print(f"Stone at {x}, {y}")
                 all_sprites.add(StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE))
 
     while True:
