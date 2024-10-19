@@ -12,6 +12,7 @@
 
 import pygame
 
+CELL_SIZE = 64
 
 class SpriteSheet:
     def __init__(self, filename):

@@ -1,15 +1,13 @@
 import pygame
 from collections import deque
 
-from .spritesheet import SpriteSheet
+from .spritesheet import SpriteSheet, CELL_SIZE
 from .common import Directions, Snake, Food, Stone, ScoreBoard, get_direction
-
-CELL_SIZE = 64
 
 
 class GameStateSprite(pygame.sprite.Sprite):
     def __init__(self, player: Snake, pos: int, WIDTH, HEIGHT, SCALE):
-        self.font = pygame.font.Font(None, 32)
+        self.font = pygame.font.Font(None, int(SCALE))
         super().__init__()
 
         self.player = player
@@ -38,7 +36,7 @@ class GameStateSprite(pygame.sprite.Sprite):
 
 class ScoreBoardSprite(pygame.sprite.Sprite):
     def __init__(self, scoreboard, WIDTH, HEIGHT, SCALE):
-        self.font = pygame.font.Font(None, 32)
+        self.font = pygame.font.Font(None, int(SCALE))
         super().__init__()
 
         self.highscores = sorted(
@@ -48,19 +46,6 @@ class ScoreBoardSprite(pygame.sprite.Sprite):
         self.image = pygame.Surface([WIDTH * SCALE, HEIGHT * SCALE])
         self.rect = self.image.get_rect()
         self.SCALE = SCALE
-
-        self.RANKS = [
-            "1ST",
-            "2ND",
-            "3RD",
-            "4TH",
-            "5TH",
-            "6TH",
-            "7TH",
-            "8TH",
-            "9TH",
-            "10TH",
-        ]
 
     def update(self):
         self.image.fill("white")
@@ -85,14 +70,27 @@ class ScoreBoardSprite(pygame.sprite.Sprite):
                 (135, 206, 235),  # Sky Blue
                 (50, 205, 50),  # Lime Green
                 (255, 165, 0),  # Orange
-                (147, 112, 219),
-            ]  # Medium Purple
+                (147, 112, 219), # Medium Purple
+            ]  
         )
+
+        RANKS = [
+            "1ST",
+            "2ND",
+            "3RD",
+            "4TH",
+            "5TH",
+            "6TH",
+            "7TH",
+            "8TH",
+            "9TH",
+            "10TH",
+        ]
 
         for i, highscore in enumerate(self.highscores):
             colors.rotate(1)
             table_surface.blit(
-                self.font.render(self.RANKS[i], True, colors[0]),
+                self.font.render(RANKS[i], True, colors[0]),
                 scale((1, i + 5)),
             )
             table_surface.blit(
@@ -121,9 +119,8 @@ class StoneSprite(pygame.sprite.Sprite):
         self.stone = stone
         self.SCALE = SCALE
 
-        rect = pygame.Rect((0, 3 * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        rect = pygame.Rect((0, 3 * SCALE, SCALE, SCALE))
         self.stone_image = pygame.Surface(rect.size)
-        self.stone_image = pygame.transform.scale(self.stone_image, (SCALE, SCALE))
 
         self.stone_image.fill("black")
 
