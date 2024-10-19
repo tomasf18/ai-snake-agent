@@ -74,8 +74,7 @@ async def main(SCALE=32):
                 foods_update = state["food"]
                 foods_update = state["food"]
             else:
-                print("Show SCOREBOARD")
-                return
+                all_sprites.add(ScoreBoardSprite(ScoreBoard(highscores=[(p[0], p[1]) for p in state["highscores"]]), WIDTH, HEIGHT, SCALE))
 
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(0.1 / GAME_SPEED)
