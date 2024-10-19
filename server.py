@@ -80,33 +80,23 @@ class GameServer:
         with open(HIGHSCORE_FILE, "w") as outfile:
             json.dump(self._highscores, outfile)
 
-    async def send_info(self, highscores: bool = False):
-        """Send game info to viewer and player."""
-        game_info = self.game.info()
+        return self._highscores
 
-        if highscores:
-            game_info["highscores"] = self._highscores
-
+    async def send_clients(self, group, info):
         to_remove = []
 
-        for viewer in self.viewers:
-            try:
-                await viewer.send(json.dumps(game_info))
-            except Exception:
-                viewer.close()
-        for viewer in to_remove:
-            self.viewers.remove(viewer)
+        if isinstance(group, dict):
+            original_group = group
+            group = group.keys()
 
-        to_remove = []
-
-        for ws, player in self.game_player.items():
+        for client in group:
             try:
-                await ws.send(json.dumps(game_info))
+                await client.send(json.dumps(info))
             except Exception:
-                to_remove.append(ws)
-                await ws.close()
-        for ws in to_remove:
-            self.game_player.pop(ws)
+                to_remove.append(client)
+                client.close()
+        for client in to_remove:
+            original_group.remove(client)
 
     async def incomming_handler(self, websocket: WebSocketCommonProtocol, path: str):
         """Process new clients arriving at the server."""
@@ -128,9 +118,10 @@ class GameServer:
                     if path == "/viewer":
                         logger.info("Viewer connected")
                         self.viewers.add(websocket)
-                        if self.game.running:
-                            game_info = self.game.info()
-                            await websocket.send(json.dumps(game_info))
+                    
+                    if self.game.running:
+                        game_info = self.game.info()
+                        await websocket.send(json.dumps(game_info))
 
                 if data["cmd"] == "key":
                     logger.debug((self.game_player[websocket], data))
@@ -166,16 +157,13 @@ class GameServer:
 
                 while self.game.running:
                     if self.game._step == 0:  # Starting a level ? Let's send the info
-                        await self.send_info()
+                        game_info = self.game.info()
+
+                        await self.send_clients(self.viewers, game_info)
+                        await self.send_clients(self.game_player, game_info)
 
                     if state := await self.game.next_frame():
-                        for viewer in self.viewers:
-                            try:
-                                await viewer.send(json.dumps(state))
-                            except Exception as err:
-                                logger.error(err)
-                                self.viewers.remove(viewer)
-                                break
+                        await self.send_clients(self.viewers, state)
 
                         snakes = state["snakes"]
                         del state[
@@ -190,12 +178,17 @@ class GameServer:
                             for player_snake in snakes:
                                 if player_snake["name"] == player.name:
                                     state = {**state, **player_snake}
+                            try:
+                                await player.ws.send(json.dumps(state))
+                            except Exception as e:
+                                logger.error("Player <%s> disconnected, could not send state", player.name)
+                                game_players.remove(player)
 
-                            await player.ws.send(json.dumps(state))
 
-                self.save_highscores()
+                game_over = {"highscores": self.save_highscores() }
+                await self.send_clients(self.viewers, game_over)
+                await self.send_clients(self.game_player, game_over)
 
-                await self.send_info(highscores=True)
                 for ws, player in self.game_player.items():
                     await ws.close()
                 self.game_player = {}
@@ -220,6 +213,7 @@ class GameServer:
                 for ws, player in self.game_player.items():
                     logger.info("Disconnecting <%s>", player)
                     await ws.close()
+                self.game_player = {}
 
 
 if __name__ == "__main__":
