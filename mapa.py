@@ -34,10 +34,14 @@ class Map:
                     0, self.ver_tiles - 1
                 )
                 wall_length = 5
-                for yy in range(y, (y + random.choice([-wall_length, wall_length])) % self.ver_tiles)[:wall_length]:
+                for yy in range(
+                    y, (y + random.choice([-wall_length, wall_length])) % self.ver_tiles
+                )[:wall_length]:
                     self.map[x][yy] = Tiles.STONE
                     self._stones.append((x, yy))
-                for xx in range(x, (x + random.choice([-wall_length, wall_length])) % self.hor_tiles)[:wall_length]:
+                for xx in range(
+                    x, (x + random.choice([-wall_length, wall_length])) % self.hor_tiles
+                )[:wall_length]:
                     self.map[xx][y] = Tiles.STONE
                     self._stones.append((xx, y))
 

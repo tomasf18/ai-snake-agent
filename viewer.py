@@ -18,12 +18,19 @@ logger = logging.getLogger("Viewer")
 logger.setLevel(logging.DEBUG)
 
 from viewer.common import Directions, Food, Snake, Stone, ScoreBoard, get_direction
-from viewer.sprites import GameStateSprite, SnakeSprite, FoodSprite, StoneSprite, ScoreBoardSprite
+from viewer.sprites import (
+    GameStateSprite,
+    SnakeSprite,
+    FoodSprite,
+    StoneSprite,
+    ScoreBoardSprite,
+)
 
 
 async def main_loop(q):
     while True:
         await main()
+
 
 def should_quit():
     for event in pygame.event.get():
@@ -41,7 +48,7 @@ async def main(SCALE=32):
             break
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(0.1)
-        
+
     logging.debug("Initial game status: %s", state)
     newgame_json = json.loads(state)
 
@@ -74,7 +81,16 @@ async def main(SCALE=32):
                 foods_update = state["food"]
                 foods_update = state["food"]
             else:
-                all_sprites.add(ScoreBoardSprite(ScoreBoard(highscores=[(p[0], p[1]) for p in state["highscores"]]), WIDTH, HEIGHT, SCALE))
+                all_sprites.add(
+                    ScoreBoardSprite(
+                        ScoreBoard(
+                            highscores=[(p[0], p[1]) for p in state["highscores"]]
+                        ),
+                        WIDTH,
+                        HEIGHT,
+                        SCALE,
+                    )
+                )
 
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(0.1 / GAME_SPEED)
@@ -96,12 +112,21 @@ async def main(SCALE=32):
         # Update Snakes
         if new_game:
             snakes = {
-                snake["name"]: Snake(body=snake["body"], direction=Directions.RIGHT, score=snake["score"], name=snake["name"], traverse=snake["traverse"])
+                snake["name"]: Snake(
+                    body=snake["body"],
+                    direction=Directions.RIGHT,
+                    score=snake["score"],
+                    name=snake["name"],
+                    traverse=snake["traverse"],
+                )
                 for snake in snakes_update
             }
 
             all_sprites.add(
-                [GameStateSprite(snake, i, WIDTH, HEIGHT, SCALE) for i, snake in enumerate(snakes.values())]
+                [
+                    GameStateSprite(snake, i, WIDTH, HEIGHT, SCALE)
+                    for i, snake in enumerate(snakes.values())
+                ]
             )
 
             snake_sprites.add(
@@ -123,7 +148,9 @@ async def main(SCALE=32):
             # Remove dead snakes
             for snake in snakes.values():
                 if snake.name not in [s["name"] for s in snakes_update]:
-                    snake_sprites.remove([s for s in snake_sprites if s.snake.name == snake.name])
+                    snake_sprites.remove(
+                        [s for s in snake_sprites if s.snake.name == snake.name]
+                    )
 
         # Render Window
         display.fill("white")

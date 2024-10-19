@@ -6,6 +6,7 @@ from .common import Directions, Snake, Food, Stone, ScoreBoard, get_direction
 
 CELL_SIZE = 64
 
+
 class GameStateSprite(pygame.sprite.Sprite):
     def __init__(self, player: Snake, pos: int, WIDTH, HEIGHT, SCALE):
         self.font = pygame.font.Font(None, 32)
@@ -13,7 +14,7 @@ class GameStateSprite(pygame.sprite.Sprite):
 
         self.player = player
         self.pos = pos
-        self.image = pygame.Surface([WIDTH * SCALE, (self.pos+1) * SCALE])
+        self.image = pygame.Surface([WIDTH * SCALE, (self.pos + 1) * SCALE])
         self.image.set_colorkey("white")
         self.rect = self.image.get_rect()
         self.SCALE = SCALE
@@ -25,16 +26,24 @@ class GameStateSprite(pygame.sprite.Sprite):
         traverse = "[T]" if self.player.traverse else ""
 
         self.image.blit(
-            self.font.render(f"{self.player.name} {traverse}: {self.player.score}", True, "purple", "white"),
+            self.font.render(
+                f"{self.player.name} {traverse}: {self.player.score}",
+                True,
+                "purple",
+                "white",
+            ),
             (0, self.pos * self.SCALE),
         )
+
 
 class ScoreBoardSprite(pygame.sprite.Sprite):
     def __init__(self, scoreboard, WIDTH, HEIGHT, SCALE):
         self.font = pygame.font.Font(None, 32)
         super().__init__()
 
-        self.highscores = sorted(scoreboard.highscores, key=lambda s: s[1], reverse=True)
+        self.highscores = sorted(
+            scoreboard.highscores, key=lambda s: s[1], reverse=True
+        )
 
         self.image = pygame.Surface([WIDTH * SCALE, HEIGHT * SCALE])
         self.rect = self.image.get_rect()
@@ -62,30 +71,37 @@ class ScoreBoardSprite(pygame.sprite.Sprite):
         table_surface = pygame.Surface(scale((15, 16)))
         table_surface.fill((70, 70, 70))
 
-        table_surface.blit(self.font.render("THE 10 BEST PLAYERS", True, "white"), scale((3,1)))
+        table_surface.blit(
+            self.font.render("THE 10 BEST PLAYERS", True, "white"), scale((3, 1))
+        )
 
         table_surface.blit(self.font.render("RANK", True, "orange"), scale((1, 3)))
         table_surface.blit(self.font.render("SCORE", True, "orange"), scale((5, 3)))
         table_surface.blit(self.font.render("NAME", True, "orange"), scale((9, 3)))
 
         colors = deque(
-                [(255, 99, 71),   # Tomato
-               (135, 206, 235), # Sky Blue
-               (50, 205, 50),   # Lime Green
-               (255, 165, 0),   # Orange
-               (147, 112, 219)] # Medium Purple
-               )
+            [
+                (255, 99, 71),  # Tomato
+                (135, 206, 235),  # Sky Blue
+                (50, 205, 50),  # Lime Green
+                (255, 165, 0),  # Orange
+                (147, 112, 219),
+            ]  # Medium Purple
+        )
 
         for i, highscore in enumerate(self.highscores):
             colors.rotate(1)
-            table_surface.blit(self.font.render(self.RANKS[i], True, colors[0]), 
-               scale((1, i + 5)),
+            table_surface.blit(
+                self.font.render(self.RANKS[i], True, colors[0]),
+                scale((1, i + 5)),
             )
-            table_surface.blit(self.font.render(str(highscore[1]), True, colors[0]), 
-               scale((5, i + 5)),
-            )   
-            table_surface.blit(self.font.render(highscore[0], True, colors[0]), 
-               scale((9, i + 5)),
+            table_surface.blit(
+                self.font.render(str(highscore[1]), True, colors[0]),
+                scale((5, i + 5)),
+            )
+            table_surface.blit(
+                self.font.render(highscore[0], True, colors[0]),
+                scale((9, i + 5)),
             )
 
         # center in screen
