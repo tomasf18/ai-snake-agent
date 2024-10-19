@@ -310,7 +310,7 @@ class Game:
         self.collision()
 
         self._state = {
-            "level": self.map.level,
+            "players": [snake for snake in self._snakes],
             "step": self._step,
             "timeout": self._timeout,
             "snakes": [
@@ -324,7 +324,6 @@ class Game:
                 }
                 for name, snake in self._snakes.items() if snake.alive
             ],
-            "food": self.map.food,
         }
 
         if all([not snake.alive for snake in self._snakes.values()]):
