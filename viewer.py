@@ -37,6 +37,10 @@ def should_quit():
         if event.type == pygame.QUIT:
             pygame.quit()
             raise SystemExit
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                raise SystemExit
 
 
 async def main(SCALE):
@@ -80,7 +84,7 @@ async def main(SCALE):
                 snakes_update = state["snakes"]
                 foods_update = state["food"]
                 foods_update = state["food"]
-            else:
+            elif "highscores" in state:
                 all_sprites.add(
                     ScoreBoardSprite(
                         ScoreBoard(
