@@ -11,6 +11,15 @@
 #  Introducao a Inteligencia Artificial, 2012-2020,
 #  Inteligência Artificial, 2014-2023
 
+import logging
+
+logging.basicConfig(
+    filename='project.log',
+    filemode='a',
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG
+)
+
 from abc import ABC, abstractmethod
 
 
@@ -63,25 +72,26 @@ class SearchProblem:
 
 # Nos de uma arvore de pesquisa
 class SearchNode:
-    def __init__(self, state, parent, cost, heuristic):
+    def __init__(self, state, parent, cost, heuristic, action=None):
         self.state = state
         self.parent = parent
         self.depth = (parent.depth + 1) if parent is not None else 0
         self.cost = cost
         self.heuristic = heuristic
+        self.action = action
 
     def __str__(self):
-        return "no(" + str(self.state) + "," + str(self.parent) + ")"
+        return "no(" + str(self.state) + "," + str(self.parent) + "," + str(self.depth) + str(self.cost) + str(self.heuristic) + ")"
 
     def __repr__(self):
         return str(self)
 
-    def in_parent(self, newState):
+    def in_parent(self, newstate):
         if self.parent is None:
             return False
-        if all(s in self.parent.state for s in newState):
+        if self.parent.state == newstate:
             return True
-        return self.parent.in_parent(newState)
+        return self.parent.in_parent(newstate)
 
 
 # Arvores de pesquisa
@@ -109,9 +119,9 @@ class SearchTree:
         path = self.get_path(node.parent)
         path += [node.state]
         return path
-
+    
     def plan(self):
-        return self.get_plan(self.problem.solution)
+        return self.get_plan(self.solution)
 
     def get_plan(self, node):
         if node.parent is None:
@@ -119,14 +129,16 @@ class SearchTree:
         plan = self.get_plan(node.parent)
         plan += [node.action]
         return plan
+    
+
 
     @property
     def average_depth(self):
-        return self.sum_depths / (self.terminals + self.non_terminals)
+        return self.sum_depths / (self.terminals + self.non_terminals - 1)
 
     @property
     def length(self):
-        return self.solution.depth
+        return self.solution.depth if self.solution else 0
 
     @property
     def terminals(self):
@@ -138,29 +150,35 @@ class SearchTree:
 
     @property
     def cost(self):
-        return self.solution.cost
+        return self.solution.cost if self.solution else None
 
     # procurar a solucao
     def search(self, limit=None):
+        
+        logging.info("Starting search with snake_body: " + str(self.problem.initial["snake_body"]) + " and goal: " + str(self.problem.goal))
+        
         while self.open_nodes != []:
-            print("Open nodes:", [node.state for node in self.open_nodes])
             node = self.open_nodes.pop(0)
-            print("Current node being explored:", node.state)
-            if self.problem.goal_test(node.state):
-                self.solution = node
-                print("Goal found:", node.state)
-                return self.get_path(node)
-            lnewnodes = []
+            
+            logging.debug("Current node: " + str(node.state["snake_body"]))
+            
             self.non_terminals += 1
+            if self.problem.goal_test(node.state):
+                
+                logging.info("Found solution with snake_body: " + str(node.state["snake_body"]))
+                
+                self.non_terminals -= 1
+                print("Found solution===========================")
+                self.solution = node
+                return self.get_path(node)
 
             if limit is not None and node.depth >= limit:
                 continue
 
+            lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
-                print(f"Action: {a}, New state: {newstate}")
                 if node.in_parent(newstate):
-                    print(f"State {newstate} is already in the parent chain, skipping.")
                     continue
 
                 cost = node.cost + self.problem.domain.cost(node.state, a)
@@ -169,8 +187,8 @@ class SearchTree:
                     node,
                     cost,
                     self.problem.domain.heuristic(newstate, self.problem.goal),
+                    a
                 )
-                print(f"Generated node: State: {newstate}, Cost: {cost}, Heuristic: {newnode.heuristic}")
                 lnewnodes.append(newnode)
 
                 self.sum_depths += newnode.depth

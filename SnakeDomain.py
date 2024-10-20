@@ -28,10 +28,19 @@ class SnakeDomain(SearchDomain):
         for dir in DIRECTION:
             new_position = [snake_head[0] + dir.dir[0], snake_head[1] + dir.dir[1]]
             
+            # if traverse is true we can go through the map and walls
+            if snake_traverse:
+                new_position[0] = new_position[0] % self.dim[0]
+                new_position[1] = new_position[1] % self.dim[1]
+            else:
+                # if the new position is out of the map, we ignore it
+                if not (0 <= new_position[0] < self.dim[0] and 0 <= new_position[1] < self.dim[1]):
+                    continue
+            
             if new_position in snake_body:
                 continue
             
-            if snake_traverse or self.board[new_position[0]][new_position[1]] == WALL:
+            if snake_traverse or self.board[new_position[0]][new_position[1]] != WALL:
                 actlist.append(dir)
 
         return actlist
@@ -41,23 +50,45 @@ class SnakeDomain(SearchDomain):
         snake_body = state["snake_body"]
         
         head = snake_body[0]
-           
-        snake_body[0:0] = [action + head]
-        if self.board[head[0]][head[1]] != FOOD:
-            snake_body.pop()
         
-        return { 
-            "snake_body": snake_body, 
+        # new head position
+        new_head = [head[0] + action.dir[0], head[1] + action.dir[1]]
+        
+        if state["snake_traverse"]:
+            new_head[0] = new_head[0] % self.dim[0]
+            new_head[1] = new_head[1] % self.dim[1]
+        
+        # for now the snake_body only contains the head
+        new_snake_body = [new_head]
+        
+        # for each body part, we push it to the next position (example, the 
+        # part that is closer to the head will have the same position as the old head and so on)
+        for i in range(len(snake_body) - 1):
+            new_snake_body.append(snake_body[i])
+        
+        if self.board[new_head[0]][new_head[1]] == FOOD:
+            new_snake_body.append(snake_body[-1])
+        
+        newstate = {
+            "snake_body": new_snake_body,
             "snake_traverse": state["snake_traverse"]
         }
+        return newstate
 
     def cost(self, state, action):
         return 1
 
     def heuristic(self, new_state, goal):
         snake_head = new_state["snake_body"][0]
-        return abs((snake_head[0] - goal[0])) + \
-               abs((snake_head[1] - goal[1]))
+        snake_traverse = new_state["snake_traverse"]
+        
+        dx = abs((snake_head[0] - goal[0]))
+        dy = abs((snake_head[1] - goal[1]))
+        if snake_traverse:
+            dx = min(dx, self.dim[0] - dx)
+            dy = min(dy, self.dim[1] - dy)
+            
+        return dx + dy
 
     def satisfies(self, state, goal):
         snake_head = state["snake_body"][0]
@@ -69,12 +100,17 @@ class SnakeDomain(SearchDomain):
             "snake_traverse" : snake.snake_traverse,
         }
         
-        print("DEBUG: ", state)
+        print()
+        print("DEBUG: state -> ", state)
         
         problem = SearchProblem(self, state, snake.food_position)
-        print("DEBUG: ", problem.initial, problem.goal)
+        print("DEBUG: initial -> ", problem.initial, " goal -> ", problem.goal)
+        print()
         tree = SearchTree(problem, "a*")
         result = tree.search()
+        print("DEBUG: result -> ", result)
         if result is None:
             raise Exception("No solution found")
-        return tree.plan()[0]
+        plan = tree.plan()
+        print("DEBUG: plan -> ", plan)
+        return plan

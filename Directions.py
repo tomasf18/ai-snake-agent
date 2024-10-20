@@ -19,4 +19,4 @@ class DIRECTION(Enum):
         return self.__dir
 
     def __add__(self, other):
-        return (self.dir[0] + other[0], self.dir[1] + other[1])
+        return [self.dir[0] + other[0], self.dir[1] + other[1]]

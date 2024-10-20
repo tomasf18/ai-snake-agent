@@ -18,6 +18,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         
         snake: Snake = Snake()
         domain: SnakeDomain = SnakeDomain(map = map_info)
+        plan = []
 
 
         while True:
@@ -26,11 +27,19 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print(state)
                 snake.update(state)
                 
-                key = domain.get_next_move(snake=snake)
-
+                if not plan:
+                    plan = domain.get_next_move(snake=snake)
+                    print(plan)
+                    
+                move = plan.pop(0)
+                key = move.key
+                
                 await websocket.send(
-                    json.dumps({"cmd": "key", "key": key.key})
+                    json.dumps({"cmd": "key", "key": key})
                 )  # send the key command to the server
+                
+                if snake.snake_head == snake.food_position:
+                    plan = []
                 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
