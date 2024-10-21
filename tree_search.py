@@ -130,8 +130,6 @@ class SearchTree:
         plan += [node.action]
         return plan
     
-
-
     @property
     def average_depth(self):
         return self.sum_depths / (self.terminals + self.non_terminals - 1)

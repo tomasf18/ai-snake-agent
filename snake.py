@@ -4,7 +4,6 @@ class Snake:
 
     def update(self, state: dict) -> None:
         # extract information from the state
-        self.level = state["level"]  # get the level (provavelmente não é necessário -----------)
         self.step = state["step"]  # get the step (provavelmente não é necessário -----------)
         self.timeout = state["timeout"]  # get the timeout (provavelmente não é necessário -----------)
 

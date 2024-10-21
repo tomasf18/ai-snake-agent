@@ -88,7 +88,7 @@ class SnakeDomain(SearchDomain):
             dx = min(dx, self.dim[0] - dx)
             dy = min(dy, self.dim[1] - dy)
             
-        return dx + dy
+        return (dx + dy)
 
     def satisfies(self, state, goal):
         snake_head = state["snake_body"][0]
@@ -100,17 +100,10 @@ class SnakeDomain(SearchDomain):
             "snake_traverse" : snake.snake_traverse,
         }
         
-        print()
-        print("DEBUG: state -> ", state)
-        
         problem = SearchProblem(self, state, snake.food_position)
-        print("DEBUG: initial -> ", problem.initial, " goal -> ", problem.goal)
-        print()
-        tree = SearchTree(problem, "a*")
+        tree = SearchTree(problem, "greedy")
         result = tree.search()
-        print("DEBUG: result -> ", result)
         if result is None:
             raise Exception("No solution found")
         plan = tree.plan()
-        print("DEBUG: plan -> ", plan)
         return plan

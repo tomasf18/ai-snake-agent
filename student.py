@@ -38,9 +38,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     json.dumps({"cmd": "key", "key": key})
                 )  # send the key command to the server
                 
-                if snake.snake_head == snake.food_position:
-                    plan = []
-                
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
