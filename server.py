@@ -96,7 +96,10 @@ class GameServer:
                 to_remove.append(client)
                 client.close()
         for client in to_remove:
-            original_group.remove(client)
+            if isinstance(original_group, dict):
+                del original_group[client]        
+            else:
+                original_group.remove(client)
 
     async def incomming_handler(self, websocket: WebSocketCommonProtocol, path: str):
         """Process new clients arriving at the server."""
