@@ -18,21 +18,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         
         snake: Snake = Snake()
         domain: SnakeDomain = SnakeDomain(map = map_info)
-        plan = []
-
 
         while True:
             try:
                 state = json.loads(await websocket.recv())  # receive game update, this must be called timely or your game will get out of sync with the server
                 print(state)
                 snake.update(state)
-                
-                if not plan:
-                    plan = domain.get_next_move(snake=snake)
-                    print(plan)
-                    
-                move = plan.pop(0)
-                key = move.key
+
+                key = domain.get_next_move(snake=snake)
                 
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})

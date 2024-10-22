@@ -173,9 +173,9 @@ class GameServer:
                         del state[
                             "snakes"
                         ]  # remove snakes from state as we only send our snake sight
-                        # del state[
-                        #     "food"
-                        # ]  # remove food from state as we only send our snake sight
+                        del state[
+                            "food"
+                        ]  # remove food from state as we only send our snake sight
 
                         for player in game_players:
                             state["ts"] = datetime.now().isoformat()
