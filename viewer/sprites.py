@@ -2,7 +2,7 @@ import pygame
 from collections import deque
 
 from .spritesheet import SpriteSheet, CELL_SIZE
-from .common import Directions, Snake, Food, Stone, ScoreBoard, get_direction
+from .common import Directions, Snake, Food, Stone, Sight, ScoreBoard, get_direction
 
 
 class GameStateSprite(pygame.sprite.Sprite):
@@ -138,6 +138,31 @@ class StoneSprite(pygame.sprite.Sprite):
             (self.SCALE * self.stone.pos[0], self.SCALE * self.stone.pos[1]),
         )
 
+class SightSprite(pygame.sprite.Sprite):
+    def __init__(self, sight: Sight, WIDTH, HEIGHT, SCALE):
+        super().__init__()
+        self.sight = sight
+        self.SCALE = SCALE
+
+        rect = pygame.Rect((0, 3 * SCALE, SCALE, SCALE))
+        self.view_image = pygame.Surface(rect.size)
+
+        self.view_image.fill("yellow")
+
+        self.image = pygame.Surface([WIDTH * SCALE, HEIGHT * SCALE]).convert()
+        self.image.set_alpha(100)
+        self.rect = self.image.get_rect()
+        self.update()
+
+    def update(self):
+        self.image.fill("white")
+        self.image.set_colorkey("white")
+
+        # Render Sight cell
+        self.image.blit(
+            self.view_image,
+            (self.SCALE * self.sight.pos[0], self.SCALE * self.sight.pos[1]),
+        )
 
 class FoodSprite(pygame.sprite.Sprite):
     def __init__(self, food: Food, WIDTH, HEIGHT, SCALE):

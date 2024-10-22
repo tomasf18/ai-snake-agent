@@ -20,6 +20,10 @@ class Food:
     pos: tuple
     is_super: bool
 
+@dataclass
+class Sight:
+    pos: tuple
+
 
 @dataclass
 class Stone:
