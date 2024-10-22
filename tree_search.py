@@ -157,16 +157,9 @@ class SearchTree:
         
         while self.open_nodes != []:
             node = self.open_nodes.pop(0)
-            
-            logging.debug("Current node: " + str(node.state["snake_body"]))
-            
             self.non_terminals += 1
             if self.problem.goal_test(node.state):
-                
-                logging.info("Found solution with snake_body: " + str(node.state["snake_body"]))
-                
                 self.non_terminals -= 1
-                print("Found solution===========================")
                 self.solution = node
                 return self.get_path(node)
 
