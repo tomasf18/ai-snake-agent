@@ -12,7 +12,7 @@ logger.setLevel(logging.DEBUG)
 INITIAL_SCORE = 0
 GAME_SPEED = 10
 MAP_SIZE = (48, 24)
-
+FOOD_IN_MAP = 2
 
 class Snake:
     def __init__(self, player_name, x=1, y=1):
@@ -157,9 +157,10 @@ def key2direction(key):
 
 
 class Game:
-    def __init__(self, level=1, timeout=TIMEOUT, size=MAP_SIZE):
+    def __init__(self, level=1, timeout=TIMEOUT, size=MAP_SIZE, game_speed=GAME_SPEED):
         logger.info(f"Game(level={level})")
         self.initial_level = level
+        self._game_speed = game_speed
         self._running = False
         self._timeout = timeout
         self._step = 0
@@ -190,7 +191,8 @@ class Game:
             player_name: Snake(player_name, *self.map.spawn_snake())
             for player_name in players_names
         }
-        self.map.spawn_food()
+        for _ in range(FOOD_IN_MAP):
+            self.map.spawn_food()
 
     def stop(self):
         logger.info("GAME OVER")
@@ -286,7 +288,7 @@ class Game:
                         snake1._traverse = not snake1._traverse
 
     async def next_frame(self):
-        await asyncio.sleep(1.0 / GAME_SPEED)
+        await asyncio.sleep(1.0 / self._game_speed)
 
         if not self._running:
             logger.info("Waiting for player 1")
@@ -337,7 +339,7 @@ class Game:
         return {
             "size": self.map.size,
             "map": self.map.map,
-            "fps": GAME_SPEED,
-            "timeout": TIMEOUT,
+            "fps": self._game_speed,
+            "timeout": self._timeout,
             "level": self.map.level,
         }

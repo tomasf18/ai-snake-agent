@@ -16,6 +16,7 @@ from requests import RequestException
 from websockets.legacy.protocol import WebSocketCommonProtocol
 
 from game import Game
+from consts import TIMEOUT
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -47,7 +48,7 @@ class GameServer:
         """Initialize Gameserver."""
         self.dbg = dbg
         self.seed = seed
-        self.game = Game()
+        self.game = Game(timeout=timeout)
         self.players: asyncio.Queue[Player] = asyncio.Queue()
         self.viewers: Set[WebSocketCommonProtocol] = set()
         self.grading = grading
@@ -155,7 +156,7 @@ class GameServer:
                 if self.seed > 0:
                     random.seed(self.seed)
 
-                self.game = Game()
+                self.game = Game(timeout=self._timeout)
                 self.game.start([p.name for p in game_players])
 
                 while self.game.running:
@@ -239,7 +240,7 @@ if __name__ == "__main__":
 
     async def main():
         """Start server tasks."""
-        g = GameServer(0, -1, args.seed, args.players, args.grading_server, args.debug)
+        g = GameServer(0, TIMEOUT, args.seed, args.players, args.grading_server, args.debug)
 
         game_loop_task = asyncio.ensure_future(g.mainloop())
 
