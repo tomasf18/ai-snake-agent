@@ -86,8 +86,8 @@ class GameServer:
     async def send_clients(self, group, info):
         to_remove = []
 
+        original_group = group
         if isinstance(group, dict):
-            original_group = group
             group = group.keys()
 
         for client in group:
