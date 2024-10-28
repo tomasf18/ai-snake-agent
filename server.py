@@ -86,8 +86,8 @@ class GameServer:
     async def send_clients(self, group, info):
         to_remove = []
 
+        original_group = group
         if isinstance(group, dict):
-            original_group = group
             group = group.keys()
 
         for client in group:
@@ -210,6 +210,7 @@ class GameServer:
                             game_record = {
                                 "player": player.name,
                                 "score": self.game.snakes[player.name].score,
+                                "players": self.number_of_players, 
                             }
                             requests.post(self.grading, json=game_record, timeout=2)
                 except RequestException as err:
