@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import getpass
 import json
 import os
@@ -24,7 +25,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             try:
                 data = json.loads(await websocket.recv())  # receive game update, this must be called timely or your game will get out of sync with the server
                 print(data)
+                
+                ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
+                if (datetime.datetime.now().timestamp() - ts) / 1000 > domain.time_per_frame:
+                    continue
+                
                 snake.update(data)
+            
 
                 key = domain.get_next_move(snake=snake)
                 

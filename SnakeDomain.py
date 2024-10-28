@@ -27,6 +27,7 @@ logging.basicConfig(
 class SnakeDomain(SearchDomain):    
     def __init__(self, map: dict):
         self.dim: tuple[int, int] = tuple(map["size"])
+        self.time_per_frame: float = 1 / int(map["fps"])
         self.board: list[list[int]] = map["map"]
         self.board_copy: list[list[int]] = map["map"]
         self.map_positions: set = set()
@@ -165,8 +166,6 @@ class SnakeDomain(SearchDomain):
             self.following_plan_to_food = False
         key = move.key
 
-
-        ## Se estiver a responder a um frame passado, damos reset ao plano
         return key
     
     def create_problem(self, state, goal):
