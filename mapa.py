@@ -2,11 +2,10 @@ import logging
 import random
 import math
 
-from consts import Direction, Tiles, VITAL_SPACE
+from consts import Direction, Tiles, VITAL_SPACE, NEST_SIZE
 
 logger = logging.getLogger("Map")
 logger.setLevel(logging.DEBUG)
-
 
 class Map:
     def __init__(
@@ -56,10 +55,10 @@ class Map:
     def spawn_snake(self):
         x = random.randint(0, self.hor_tiles - 1)
         y = random.randint(0, self.ver_tiles - 1)
-        while (x, y) in self._snake_nests:
+        while any((x, y) in nest for nest in self._snake_nests):
             x = random.randint(0, self.hor_tiles - 1)
             y = random.randint(0, self.ver_tiles - 1)
-        self._snake_nests.append((x, y))
+        self._snake_nests.append([(a, b) for a in range(x - NEST_SIZE, x + NEST_SIZE) for b in range(y - NEST_SIZE, y + NEST_SIZE)])
         return x, y
 
     def spawn_food(self, food_type=Tiles.FOOD):
