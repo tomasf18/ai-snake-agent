@@ -15,7 +15,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         # extract the map info, first JSON received when joining the game
         map_info = json.loads(await websocket.recv())
-        print(map_info)
         
         snake: Snake = Snake()
         domain: SnakeDomain = SnakeDomain(map = map_info)
@@ -24,7 +23,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         while True:
             try:
                 data = json.loads(await websocket.recv())  # receive game update, this must be called timely or your game will get out of sync with the server
-                print(data)
                 
                 ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
                 if (datetime.datetime.now().timestamp() - ts) / 1000 > domain.time_per_frame:

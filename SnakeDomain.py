@@ -1,6 +1,9 @@
+import pprint
 from tree_search import *
 from Directions import DIRECTION
 from snake import Snake
+import time
+import datetime
 import consts
 import random
 
@@ -37,6 +40,9 @@ class SnakeDomain(SearchDomain):
         self.foods_in_map: set = set()
         self.super_foods_in_map: set = set()
         self.goal = None
+
+        # TODO: Delete this line
+        self.maxDist = 0
 
 
     async def startupMap(self):
@@ -125,6 +131,9 @@ class SnakeDomain(SearchDomain):
         return goal == snake_head
 
     def get_next_move(self, snake: Snake) -> str:
+        logging.info("\tgetNextMove: Started computing...")
+        ti: float = time.time()
+        
         state = {
             "snake_body": snake.snake,
             "snake_traverse" : snake.snake_traverse,
@@ -143,6 +152,10 @@ class SnakeDomain(SearchDomain):
         
         for super_food in super_foods_in_sight:
             self.super_foods_in_map.add(super_food)
+
+            # # EAT SUPER FOOD
+            # if list(super_food) != self.goal:
+            #     self.foods_in_map.add(super_food)
             self.map_positions.discard(super_food)
         
         logging.info(f"Foods in map: {self.foods_in_map}")
@@ -160,11 +173,28 @@ class SnakeDomain(SearchDomain):
         
         move = self.plan.pop(0)
         if (move not in self.actions(state)):
+            ## SE nao for válida:
+            #   escolher uma açao valida de entre as self.actions
+            # if following to food:
+            #       foods.in_maps.add(self.goal)
+            #   Na proxima iteraçao recalcular o caminho valido
             self.create_problem(state, self.goal)
             move = self.plan.pop(0)
         if not self.plan:
             self.following_plan_to_food = False
         key = move.key
+
+        tf: float = time.time()
+        dt: float = tf - ti 
+        diff_to_server = tf - datetime.datetime.fromisoformat(snake.timestamp).timestamp()
+        if (diff_to_server > self.maxDist):
+            self.maxDist = diff_to_server
+        logging.error(
+            "\tgetNextMove time to compute %.2fms (diff to server %.2fms (max diff %.2fms))",
+                dt*1000,
+                diff_to_server*1000,
+                self.maxDist*1000
+        )
 
         return key
     
@@ -173,6 +203,8 @@ class SnakeDomain(SearchDomain):
         tree = SearchTree(problem, "greedy")
         result = tree.search()
         if result is None:
+            logging.error(f"No solution found, goal: {goal}, state: {state}")
+            pprint(self.board)
             raise Exception("No solution found")
         self.plan = tree.plan()
         logging.info(f"Plan: {self.plan}")
@@ -180,4 +212,4 @@ class SnakeDomain(SearchDomain):
     def random_goal_in_map(self):
         if len(self.map_positions_copy) == 0:
             self.map_positions_copy = self.map_positions.copy()
-        return self.map_positions_copy.pop()
+        return random.choice(list(self.map_positions_copy))

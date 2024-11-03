@@ -6,8 +6,6 @@ class Snake:
 
     def update(self, data: dict) -> None:
         
-        
-        
         # extract information from the data
         self.players = data["players"]
         self.step = data["step"]
