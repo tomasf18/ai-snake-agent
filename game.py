@@ -208,6 +208,8 @@ class Game:
     def update_snake(self, name):
         try:
             snake = self._snakes[name]
+            if not snake.alive:
+                return  # if snake is dead, we don't need to update it  
             lastkey = snake.lastkey
 
             assert lastkey in "wasd" or lastkey == ""
@@ -244,7 +246,9 @@ class Game:
                 continue
             # check collisions between snakes
             for name2, snake2 in self._snakes.items():
-                if name1 != name2 and snake2.collision(snake1.head) and snake2.alive:
+                if not snake2.alive:
+                    continue
+                if name1 != name2 and snake2.collision(snake1.head):
                     self.kill_snake(name1)
                     snake2.score += KILL_SNAKE_POINTS
 
