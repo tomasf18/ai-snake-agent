@@ -188,6 +188,7 @@ class SnakeDomain(SearchDomain):
             self.create_problem(state, self.goal)
         
         move = self.plan.pop(0)
+        ## Panic move
         if (move not in (valid_moves:=self.actions(state))):
             move = random.choice(valid_moves)
             self.plan = []
@@ -212,10 +213,14 @@ class SnakeDomain(SearchDomain):
 
         return key
     
+    ## FIX: Criar um timeout, 
+    # caso chegue a esse timeout, 
+    # obtem valid moves
+    # e insere no plano [validMove]
     def create_problem(self, state, goal):
         problem = SearchProblem(self, state, goal)
         tree = SearchTree(problem, "greedy")
-        result = tree.search(limit=(self.dim[0] + self.dim[1])*3)
+        result = tree.search()
         if result is None:
             logging.error(f"No solution found, goal: {goal}, state: {state}")
             raise Exception("No solution found")

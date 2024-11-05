@@ -25,7 +25,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 data = json.loads(await websocket.recv())  # receive game update, this must be called timely or your game will get out of sync with the server
                 
                 ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
-                if (datetime.datetime.now().timestamp() - ts) / 1000 > domain.time_per_frame:
+                if (datetime.datetime.now().timestamp() - ts) > domain.time_per_frame:
                     continue
                 
                 snake.update(data)
