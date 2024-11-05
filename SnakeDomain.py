@@ -76,7 +76,7 @@ class SnakeDomain(SearchDomain):
             if new_position in snake_body :#or tuple(new_position) in self.super_foods_in_map:
                 continue
 
-            if snake_traverse or self.board[new_position[0]][new_position[1]] in consts.Tiles.STONE:
+            if snake_traverse or self.board[new_position[0]][new_position[1]] != consts.Tiles.STONE:
                 actlist.append(dir)
 
         return actlist
