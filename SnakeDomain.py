@@ -15,7 +15,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.DEBUG
 )
-
+EATING_SUPERFOOD = True
 # {'players': ['danilo'], 
 # 'step': 274, 
 # 'timeout': 3000, 
@@ -152,38 +152,52 @@ class SnakeDomain(SearchDomain):
                 self.foods_in_map.add(food)
         
         for super_food in super_foods_in_sight:
-            self.super_foods_in_map.add(super_food)
-
-            # EAT SUPER FOOD
             if list(super_food) != self.goal:
-                self.foods_in_map.add(super_food)
-            #self.map_positions.discard(super_food)
+                self.super_foods_in_map.add(super_food)
+
+            if not EATING_SUPERFOOD:
+                self.map_positions.discard(super_food)
         
         logging.info(f"Foods in map: {self.foods_in_map}")
         logging.info(f"Board copy: {self.board_copy}")
         
     
         if len(self.foods_in_map) > 0 and not self.following_plan_to_food:
-            self.goal = list(self.foods_in_map.pop())  # FIX: escolher a fruta mais proxima
+            head = state["snake_body"][0]
+            self.goal = list(min(
+                self.foods_in_map, 
+                key=lambda pos: self.calculateDistance(head, pos, snake_traverse=state["snake_traverse"])
+            ))
+            self.foods_in_map.discard(tuple(self.goal))
+
             logging.info(f"Goal: {self.goal}")
             self.create_problem(state, self.goal)
             self.following_plan_to_food = True
+        elif len(self.super_foods_in_map) > 0:
+            head = state["snake_body"][0]
+            self.goal = list(min(
+                self.super_foods_in_map, 
+                key=lambda pos: self.calculateDistance(head, pos, snake_traverse=state["snake_traverse"])
+            ))
+            self.super_foods_in_map.discard(tuple(self.goal))
+
+            logging.info(f"Goal: {self.goal}")
+            self.create_problem(state, self.goal)
         elif not self.plan:
             self.goal = list(self.random_goal_in_map(state))
             self.create_problem(state, self.goal)
         
         move = self.plan.pop(0)
-        if (move not in self.actions(state)):
-            self.create_problem(state, self.goal)
-            move = self.plan.pop(0)
+        if (move not in (valid_moves:=self.actions(state))):
+            move = random.choice(valid_moves)
+            self.plan = []
 
         if self.following_plan_to_food and not self.plan:
             self.map_positions_copy = self.map_positions.copy()
             self.following_plan_to_food = False
         key = move.key
-        print(f"\n{self.map_positions_copy}")
 
-
+        print(f"\n\n{self.map_positions_copy}")
         tf: float = time.time()
         dt: float = tf - ti 
         diff_to_server = tf - datetime.datetime.fromisoformat(snake.timestamp).timestamp()
@@ -204,7 +218,6 @@ class SnakeDomain(SearchDomain):
         result = tree.search(limit=(self.dim[0] + self.dim[1])*3)
         if result is None:
             logging.error(f"No solution found, goal: {goal}, state: {state}")
-            pprint(self.board)
             raise Exception("No solution found")
         self.plan = tree.plan()
         logging.info(f"Plan: {self.plan}")
