@@ -95,7 +95,7 @@ class GameServer:
                 await client.send(json.dumps(info))
             except Exception:
                 to_remove.append(client)
-                client.close()
+                await client.close()
         for client in to_remove:
             if isinstance(original_group, dict):
                 del original_group[client]        

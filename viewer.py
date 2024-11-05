@@ -1,12 +1,3 @@
-from viewer.sprites import (
-    GameStateSprite,
-    SnakeSprite,
-    FoodSprite,
-    StoneSprite,
-    ScoreBoardSprite,
-    SightSprite,
-)
-from viewer.common import Directions, Food, Snake, Stone, Sight, ScoreBoard, get_direction
 import argparse
 import asyncio
 import json
@@ -25,6 +16,15 @@ logger_websockets.setLevel(logging.WARN)
 
 logger = logging.getLogger("Viewer")
 logger.setLevel(logging.DEBUG)
+
+from viewer.common import Directions, Food, Snake, Stone, ScoreBoard, get_direction
+from viewer.sprites import (
+    GameStateSprite,
+    SnakeSprite,
+    FoodSprite,
+    StoneSprite,
+    ScoreBoardSprite,
+)
 
 
 async def main_loop(q, SCALE):
@@ -67,9 +67,6 @@ async def main(SCALE):
     snake_sprites = pygame.sprite.Group()
     food_sprites = pygame.sprite.Group()
     stone_sprites = pygame.sprite.Group()
-    # Sight Sprite
-    sight_sprites = pygame.sprite.Group()
-
     prev_foods = None
 
     while True:
@@ -83,13 +80,11 @@ async def main(SCALE):
                 snakes_update = state["snakes"]
                 foods_update = state["food"]
                 foods_update = state["food"]
-                sight_update = snakes_update[0]["sight"]
             elif "highscores" in state:
                 all_sprites.add(
                     ScoreBoardSprite(
                         ScoreBoard(
-                            highscores=[(p[0], p[1])
-                                        for p in state["highscores"]]
+                            highscores=[(p[0], p[1]) for p in state["highscores"]]
                         ),
                         WIDTH,
                         HEIGHT,
@@ -112,20 +107,9 @@ async def main(SCALE):
                 for food in foods_update
             }
             food_sprites.add(
-                [FoodSprite(food, WIDTH, HEIGHT, SCALE)
-                 for food in foods.values()]
+                [FoodSprite(food, WIDTH, HEIGHT, SCALE) for food in foods.values()]
             )
             prev_foods = foods_update
-        
-        # Update Sight
-        if True: # Só para ficar uniforme
-            sight_sprites.empty()
-            for x, col in sight_update.items():
-                for y, pos in col.items():
-                    sight_sprites.add(
-                        SightSprite(Sight(pos=(int(x), int(y))),
-                        WIDTH, HEIGHT, SCALE)
-                    )
 
         # Update Stones
         if new_game:
@@ -133,8 +117,7 @@ async def main(SCALE):
                 for y, pos in enumerate(col):
                     if pos == Tiles.STONE:
                         stone_sprites.add(
-                            StoneSprite(Stone(pos=(x, y)),
-                                        WIDTH, HEIGHT, SCALE)
+                            StoneSprite(Stone(pos=(x, y)), WIDTH, HEIGHT, SCALE)
                         )
 
         # Update Snakes
@@ -166,8 +149,7 @@ async def main(SCALE):
             )
 
             snake_sprites.add(
-                [SnakeSprite(snake, WIDTH, HEIGHT, SCALE)
-                 for snake in snakes.values()]
+                [SnakeSprite(snake, WIDTH, HEIGHT, SCALE) for snake in snakes.values()]
             )
 
         else:
@@ -195,14 +177,12 @@ async def main(SCALE):
 
         try:
             all_sprites.update()
-            sight_sprites.update()
             snake_sprites.update()
             food_sprites.update()
             stone_sprites.update()
         except Exception as e:
             logging.error(e)
         stone_sprites.draw(display)
-        sight_sprites.draw(display)
         food_sprites.draw(display)
         all_sprites.draw(display)
         snake_sprites.draw(display)
@@ -225,8 +205,7 @@ if __name__ == "__main__":
     PORT = os.environ.get("PORT", "8000")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--server", help="IP address of the server", default=SERVER)
+    parser.add_argument("--server", help="IP address of the server", default=SERVER)
     parser.add_argument(
         "--scale", help="reduce size of window by x times", type=int, default=1
     )
@@ -243,8 +222,7 @@ if __name__ == "__main__":
 
     try:
         LOOP.run_until_complete(
-            asyncio.gather(messages_handler(ws_path, q),
-                           main_loop(q, SCALE=SCALE))
+            asyncio.gather(messages_handler(ws_path, q), main_loop(q, SCALE=SCALE))
         )
     finally:
         LOOP.stop()
