@@ -12,7 +12,7 @@ logger.setLevel(logging.DEBUG)
 INITIAL_SCORE = 0
 GAME_SPEED = 10
 MAP_SIZE = (48, 24)
-FOOD_IN_MAP = 2
+FOOD_IN_MAP = 4
 
 class Snake:
     def __init__(self, player_name, x=1, y=1):
@@ -285,9 +285,9 @@ class Game:
                     elif kind == SuperFood.LENGTH:
                         extra = random.randint(-2, 2)
                         snake1.grow(extra)
-                        snake1.score += extra
                     elif kind == SuperFood.RANGE:
-                        snake1.range = random.randint(2, 6)
+                        snake1.range += random.randint(-2, 2)
+                        snake1.range = min(max(snake1.range, 2), 6) # range between 2 and 6
                     elif kind == SuperFood.TRAVERSE:
                         snake1._traverse = not snake1._traverse
 
