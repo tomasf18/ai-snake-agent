@@ -4,8 +4,8 @@ import getpass
 import json
 import os
 import websockets # type: ignore
-from snake import Snake
-from SnakeDomain import SnakeDomain
+from utils.snake import Snake
+from utils.SnakeDomain import SnakeDomain
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     

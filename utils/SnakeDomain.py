@@ -1,7 +1,7 @@
 import pprint
-from tree_search import *
-from Directions import DIRECTION
-from snake import Snake
+from utils.tree_search import *
+from utils.Directions import DIRECTION
+from utils.snake import Snake
 import time
 import datetime
 import consts

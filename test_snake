@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Número de vezes que o teste será executado (valor padrão é 1)
+num_times=${1:-1}
+total_score=0
+
+# Função para matar o servidor e o viewer se o script for interrompido com Ctrl+C
+cleanup() {
+    echo "Cleaning up..."
+    kill $server_pid $viewer_pid 2>/dev/null
+    wait $server_pid 2>/dev/null
+    wait $viewer_pid 2>/dev/null
+    exit 0
+}
+
+# Captura o sinal SIGINT (Ctrl+C) e chama a função cleanup
+trap cleanup SIGINT
+
+for ((i=1; i<=num_times; i++))  # Corrigido para usar 'num_times'
+do
+    echo "Running test $i..."
+
+    # Inicia o server e viewer em segundo plano, redirecionando o output do viewer para /dev/null
+    python3 server.py > /dev/null 2>&1 &  # Redireciona a saída do server para /dev/null
+    server_pid=$!
+    python3 viewer.py > /dev/null 2>&1 &  # Redireciona a saída do viewer para /dev/null
+    viewer_pid=$!
+
+    # Aguarda alguns segundos para garantir que o servidor esteja pronto para aceitar conexões
+    sleep 2  # Ajuste o valor conforme necessário
+
+    # Executa o student.py e captura o score quando a snake morre
+    score=$(python3 student.py | grep -oP 'Score: \K\d+')
+
+    # Se o score não for encontrado, assume 0 como default
+    if [ -z "$score" ]; then
+        echo "No score found for test $i, assuming score 0."
+        score=0
+    fi
+
+    # Imprime o score da execução atual
+    echo "Score for test $i: $score"
+
+    # Soma o score para calcular a média depois
+    total_score=$((total_score + score))
+
+    # Mata o server e viewer para a próxima execução
+    kill $server_pid $viewer_pid
+    wait $server_pid 2>/dev/null
+    wait $viewer_pid 2>/dev/null
+done
+
+# Calcula a média dos scores
+average_score=$(echo "$total_score / $num_times" | bc -l)
+printf "Average score: %.2f\n" "$average_score"
