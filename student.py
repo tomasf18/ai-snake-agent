@@ -3,7 +3,7 @@ import datetime
 import getpass
 import json
 import os
-import websockets
+import websockets # type: ignore
 from snake import Snake
 from SnakeDomain import SnakeDomain
 

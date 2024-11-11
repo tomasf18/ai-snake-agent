@@ -220,11 +220,16 @@ class SnakeDomain(SearchDomain):
     def create_problem(self, state, goal):
         problem = SearchProblem(self, state, goal)
         tree = SearchTree(problem, "greedy")
-        result = tree.search()
+        result = tree.search(timeout=0.01)
         if result is None:
             logging.error(f"No solution found, goal: {goal}, state: {state}")
-            raise Exception("No solution found")
-        self.plan = tree.plan()
+            valid_moves = self.actions(state)
+            if valid_moves:
+                self.plan = [random.choice(valid_moves)]
+            else:
+                raise Exception("No valid moves")
+        else:
+            self.plan = tree.plan()
         logging.info(f"Plan: {self.plan}")
     
     def random_goal_in_map(self, state):
