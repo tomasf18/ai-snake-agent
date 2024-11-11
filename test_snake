@@ -16,21 +16,23 @@ cleanup() {
 # Captura o sinal SIGINT (Ctrl+C) e chama a função cleanup
 trap cleanup SIGINT
 
-for ((i=1; i<=num_times; i++))  # Corrigido para usar 'num_times'
-do
+for ((i=1; i<=num_times; i++)); do
     echo "Running test $i..."
 
-    # Inicia o server e viewer em segundo plano, redirecionando o output do viewer para /dev/null
-    python3 server.py > /dev/null 2>&1 &  # Redireciona a saída do server para /dev/null
+    # Inicia o server e viewer em segundo plano, redirecionando saída para logs temporários
+    python3 server.py > server_log.txt 2>&1 &
     server_pid=$!
-    python3 viewer.py > /dev/null 2>&1 &  # Redireciona a saída do viewer para /dev/null
+    python3 viewer.py > /dev/null 2>&1 &
     viewer_pid=$!
 
     # Aguarda alguns segundos para garantir que o servidor esteja pronto para aceitar conexões
-    sleep 2  # Ajuste o valor conforme necessário
+    sleep 3  # Aumente o valor se necessário
 
     # Executa o student.py e captura o score quando a snake morre
-    score=$(python3 student.py | grep -oP 'Score: \K\d+')
+    python3 student.py > /dev/null 2>&1
+
+    # Extrai o último score do log do server, buscando o padrão "SCORE <username>: <score>"
+    score=$(grep -oP '\bSCORE\b.*:\s*\K\d+' server_log.txt | tail -1)
 
     # Se o score não for encontrado, assume 0 como default
     if [ -z "$score" ]; then
@@ -50,6 +52,11 @@ do
     wait $viewer_pid 2>/dev/null
 done
 
-# Calcula a média dos scores
-average_score=$(echo "$total_score / $num_times" | bc -l)
-printf "Average score: %.2f\n" "$average_score"
+# Calcula a média dos scores com duas casas decimais
+average_score=$(echo "scale=2; $total_score / $num_times" | bc)
+
+# Certifique-se de que o valor da média seja tratado corretamente
+echo "Average score: $average_score"
+
+# Remove o log temporário
+rm server_log.txt
