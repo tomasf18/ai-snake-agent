@@ -3,5 +3,5 @@ requests
 pygame
 aiohttp
 async-timeout
-websockets
+websockets==13.1
 yarl
