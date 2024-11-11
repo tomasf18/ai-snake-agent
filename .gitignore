@@ -1,5 +1,7 @@
 highscores.json
 
+project.log
+
 *.pyc
 __pycache__
 
