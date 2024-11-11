@@ -10,6 +10,7 @@ cleanup() {
     kill $server_pid $viewer_pid 2>/dev/null
     wait $server_pid 2>/dev/null
     wait $viewer_pid 2>/dev/null
+    rm server_log.txt
     exit 0
 }
 
