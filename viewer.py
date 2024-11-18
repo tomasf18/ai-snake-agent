@@ -19,7 +19,9 @@ logger.setLevel(logging.DEBUG)
 
 from viewer.common import Directions, Food, Snake, Stone, ScoreBoard, get_direction
 from viewer.sprites import (
+    Info,
     GameStateSprite,
+    GameInfoSprite,
     SnakeSprite,
     FoodSprite,
     StoneSprite,
@@ -69,6 +71,8 @@ async def main(SCALE):
     stone_sprites = pygame.sprite.Group()
     prev_foods = None
 
+    step_info = Info(text="0")
+
     while True:
         should_quit()
 
@@ -80,6 +84,7 @@ async def main(SCALE):
                 snakes_update = state["snakes"]
                 foods_update = state["food"]
                 foods_update = state["food"]
+                step_info.text = f"Step: {state['step']}"
             elif "highscores" in state:
                 all_sprites.add(
                     ScoreBoardSprite(
@@ -140,6 +145,8 @@ async def main(SCALE):
                 )
                 for snake in snakes_update
             }
+
+            all_sprites.add(GameInfoSprite(step_info, WIDTH-len(step_info.text), 0, WIDTH, SCALE))
 
             all_sprites.add(
                 [
