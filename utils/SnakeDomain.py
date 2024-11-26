@@ -1,4 +1,6 @@
+import math
 import pprint
+from utils.multi_objective_search import MultiObjectiveSearch
 from utils.tree_search import *
 from utils.Directions import DIRECTION
 from utils.snake import Snake
@@ -16,16 +18,6 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 EATING_SUPERFOOD = True
-# {'players': ['danilo'], 
-# 'step': 274, 
-# 'timeout': 3000, 
-# 'ts': '2024-10-22T14:13:33.345679', 
-# 'name': 'danilo', 
-# 'body': [[21, 12], [22, 12], [22, 11], [22, 10], [22, 9], [23, 9], [24, 9], [25, 9], [26, 9], [27, 9], [28, 9], [29, 9], [30, 9], [31, 9], [32, 9]], 
-# 'sight': {'18': {'12': 0}, '19': {'10': 0, '11': 0, '12': 0, '13': 0, '14': 0}, '20': {'10': 0, '11': 0, '12': 0, '13': 0, '14': 0}, '21': {'9': 1, '10': 1, '11': 1, '12': 4, '13': 0, '14': 0, '15': 0}, '22': {'10': 4, '11': 4, '12': 4, '13': 0, '14': 0}, '23': {'10': 0, '11': 0, '12': 0, '13': 0, '14': 0}, '24': {'12': 0}}, 
-# 'score': 13, 
-# 'range': 3, 
-# 'traverse': False}
 
 class SnakeDomain(SearchDomain):    
     def __init__(self, map: dict):
@@ -39,6 +31,9 @@ class SnakeDomain(SearchDomain):
         self.following_plan_to_food = False
         self.foods_in_map: set = set()
         self.super_foods_in_map: set = set()
+        self.multi_objectives = MultiObjectiveSearch([])
+        
+        # TODO: Delete this line
         self.goal = None
 
         # TODO: Delete this line
@@ -107,7 +102,8 @@ class SnakeDomain(SearchDomain):
         
         newstate = {
             "snake_body": new_snake_body,
-            "snake_traverse": state["snake_traverse"]
+            "snake_traverse": state["snake_traverse"],
+            # TODO alterar state -> adicionar objetivos
         }
         return newstate
 
@@ -115,6 +111,7 @@ class SnakeDomain(SearchDomain):
         return 1
 
     def heuristic(self, new_state, goal):
+        # TODO verificar pelos objetivos
         snake_head = new_state["snake_body"][0]
         snake_traverse = new_state["snake_traverse"]
         
@@ -134,36 +131,43 @@ class SnakeDomain(SearchDomain):
         return goal == snake_head
 
     def get_next_move(self, snake: Snake) -> str:
+        """Returns the next move to be taken by the snake"""
+        
         logging.info("\tgetNextMove: Started computing...")
         ti: float = time.time()
         
         state = {
             "snake_body": snake.snake,
             "snake_traverse" : snake.snake_traverse,
-            "snake_sight" : snake.snake_sight
+            "snake_sight" : snake.snake_sight,
+            "objectives" : None, # Alterar para ter objetivos
         }
         
+        # 1. Update the map removing the snake sight
         self.updateMapCopy(state["snake_sight"])
         
+        # 2. Add new known foods
         foods_in_sight, super_foods_in_sight = snake.check_food_in_sight()
         
         for food in foods_in_sight:
-            if list(food) != self.goal:
+            if list(food) not in self.multi_objectives.objectives:
                 self.foods_in_map.add(food)
         
         for super_food in super_foods_in_sight:
-            if list(super_food) != self.goal:
+            if list(super_food) not in self.multi_objectives.objectives:
                 self.super_foods_in_map.add(super_food)
 
             if not EATING_SUPERFOOD:
                 self.map_positions.discard(super_food)
+                
         
         logging.info(f"Foods in map: {self.foods_in_map}")
         logging.info(f"Board copy: {self.board_copy}")
         
-    
+        head = state["snake_body"][0]
+
+        # Se existe foods conhecidas
         if len(self.foods_in_map) > 0 and not self.following_plan_to_food:
-            head = state["snake_body"][0]
             self.goal = list(min(
                 self.foods_in_map, 
                 key=lambda pos: self.calculateDistance(head, pos, snake_traverse=state["snake_traverse"])
@@ -171,10 +175,14 @@ class SnakeDomain(SearchDomain):
             self.foods_in_map.discard(tuple(self.goal))
 
             logging.info(f"Goal: {self.goal}")
+            # TODO: 
+            # self.multi_objectives.
+
             self.create_problem(state, self.goal)
             self.following_plan_to_food = True
-        elif len(self.super_foods_in_map) > 0:
-            head = state["snake_body"][0]
+
+        # Se existe superfoods conhecidas
+        elif (self.super_foods_in_map) > 0:
             self.goal = list(min(
                 self.super_foods_in_map, 
                 key=lambda pos: self.calculateDistance(head, pos, snake_traverse=state["snake_traverse"])
@@ -183,9 +191,26 @@ class SnakeDomain(SearchDomain):
 
             logging.info(f"Goal: {self.goal}")
             self.create_problem(state, self.goal)
-        elif not self.plan:
-            self.goal = list(self.random_goal_in_map(state))
-            self.create_problem(state, self.goal)
+
+        # Se nao há objetivos
+        elif self.multi_objectives.is_empty():
+            random_point = self.random_goal_in_map(state)
+            for point in self.create_list_objectives(state, random_point):
+                self.multi_objectives.add_goal(point)
+            
+            # TODO: Create problem
+
+        # Se chegou ao objetivo
+        elif head == self.multi_objectives.get_next_goal():
+            # Eliminar o objetivo atual
+            self.multi_objectives.remove_next_goal()
+            
+            # Criar um novo objetivo a visitar TODO: fazer do genero do que fi<emos la em baixo
+            new_goal = self.random_goal_in_map(state)
+            self.multi_objectives.add_goal(new_goal)
+
+            # Criar um problema com o proximo objetivo
+            self.create_problem(state)
         
         move = self.plan.pop(0)
         ## Panic move
@@ -198,6 +223,7 @@ class SnakeDomain(SearchDomain):
             self.following_plan_to_food = False
         key = move.key
 
+        # ======================== DEBUG ========================
         print(f"\n\n{self.map_positions_copy}")
         tf: float = time.time()
         dt: float = tf - ti 
@@ -210,14 +236,11 @@ class SnakeDomain(SearchDomain):
                 diff_to_server*1000,
                 self.maxDist*1000
         )
+        # ======================== DEBUG ========================
 
         return key
     
-    ## FIX: Criar um timeout, 
-    # caso chegue a esse timeout, 
-    # obtem valid moves
-    # e insere no plano [validMove]
-    def create_problem(self, state, goal):
+    def create_problem(self, state, goal = None):
         problem = SearchProblem(self, state, goal)
         tree = SearchTree(problem, "greedy")
         result = tree.search(timeout=0.01)
@@ -256,3 +279,21 @@ class SnakeDomain(SearchDomain):
         for row, cols in sight.items():
             for col, value in cols.items():
                 self.map_positions_copy.discard((int(row), int(col)))
+
+    def create_list_objectives(self, state, goal):
+        """"Returns a list of objectives to be achieved"""    
+        half_snake_size = len(state["snake_body"])/2
+        width = self.dim[0]
+        height = self.dim[1]
+
+        # Random number between 0º and 360º 
+        theta1 = random.random() * 2 * math.pi
+        x_1 = ( goal[0] + int( half_snake_size * math.cos(theta1)) ) % width
+        y_1 = ( goal[1] + int( half_snake_size * math.sin(theta1)) ) % height
+
+        # Random number between 45º and 315º 
+        theta2 = math.pi/4 + random.random() * ( 2 * math.pi - math.pi / 2)
+        x_2 = ( x_1[0] + int( half_snake_size * math.cos(theta2)) ) % width 
+        y_2 = ( y_1[1] + int( half_snake_size * math.sin(theta2)) ) % height
+
+        return [goal, (x_1, y_1), (x_2, y_2)]
