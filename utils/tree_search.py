@@ -147,6 +147,7 @@ class SearchTree:
         
         while self.open_nodes != []:
             
+            logging.info(f"TIMEOUT TIME: {time.time() - start_time}")
             if timeout and (time.time() - start_time) > timeout:
                 logging.info("Timeout reached")
                 return None

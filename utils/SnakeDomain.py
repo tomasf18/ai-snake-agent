@@ -32,11 +32,8 @@ class SnakeDomain(SearchDomain):
         self.foods_in_map: set = set()
         self.super_foods_in_map: set = set()
         self.multi_objectives = MultiObjectiveSearch([])
-        
-        # TODO: Delete this line
-        self.goal = None
 
-        # TODO: Delete this line
+        # Debugging
         self.maxDist = 0
 
 
@@ -71,6 +68,12 @@ class SnakeDomain(SearchDomain):
             if new_position in snake_body :#or tuple(new_position) in self.super_foods_in_map:
                 continue
 
+            sight = state["snake_sight"]
+            for row, cols in sight.items():
+                for col, value in cols.items():
+                    if value == consts.Tiles.SNAKE:
+                        continue
+
             if snake_traverse or self.board[new_position[0]][new_position[1]] != consts.Tiles.STONE:
                 actlist.append(dir)
 
@@ -84,26 +87,27 @@ class SnakeDomain(SearchDomain):
         
         # new head position
         new_head = [head[0] + action.dir[0], head[1] + action.dir[1]]
-        
+
         if state["snake_traverse"]:
             new_head[0] = new_head[0] % self.dim[0]
             new_head[1] = new_head[1] % self.dim[1]
-        
+
         # for now the snake_body only contains the head
         new_snake_body = [new_head]
-        
+
         # for each body part, we push it to the next position (example, the 
         # part that is closer to the head will have the same position as the old head and so on)
         for i in range(len(snake_body) - 1):
             new_snake_body.append(snake_body[i])
-        
+
         if self.board[new_head[0]][new_head[1]] == consts.Tiles.FOOD:
             new_snake_body.append(snake_body[-1])
-        
+            
         newstate = {
             "snake_body": new_snake_body,
             "snake_traverse": state["snake_traverse"],
-            # TODO alterar state -> adicionar objetivos
+            "snake_sight": state["snake_sight"],
+            "objectives": [] if not state["objectives"] else state["objectives"] if new_head != state["objectives"][0] else state["objectives"][1:]
         }
         return newstate
 
@@ -111,11 +115,16 @@ class SnakeDomain(SearchDomain):
         return 1
 
     def heuristic(self, new_state, goal):
-        # TODO verificar pelos objetivos
         snake_head = new_state["snake_body"][0]
         snake_traverse = new_state["snake_traverse"]
+        objectives = new_state["objectives"]
         
-        return self.calculateDistance(snake_head, goal, snake_traverse)
+        
+        if objectives:
+            logging.info(f"objective: {objectives}")
+            return self.calculateDistance(snake_head, objectives[0], snake_traverse)
+        else:
+            return self.calculateDistance(snake_head, goal, snake_traverse)
 
     def calculateDistance(self, start, end, snake_traverse):
         dx = abs((end[0] - start[0]))
@@ -128,6 +137,7 @@ class SnakeDomain(SearchDomain):
 
     def satisfies(self, state, goal):
         snake_head = state["snake_body"][0]
+        logging.info(f"VERIFYING IF snake_head == goal: snake_head: {snake_head}, goal: {goal}")
         return goal == snake_head
 
     def get_next_move(self, snake: Snake) -> str:
@@ -140,7 +150,7 @@ class SnakeDomain(SearchDomain):
             "snake_body": snake.snake,
             "snake_traverse" : snake.snake_traverse,
             "snake_sight" : snake.snake_sight,
-            "objectives" : None, # Alterar para ter objetivos
+            "objectives" : self.multi_objectives.get_list_of_objectives()
         }
         
         # 1. Update the map removing the snake sight
@@ -156,9 +166,6 @@ class SnakeDomain(SearchDomain):
         for super_food in super_foods_in_sight:
             if list(super_food) not in self.multi_objectives.objectives:
                 self.super_foods_in_map.add(super_food)
-
-            if not EATING_SUPERFOOD:
-                self.map_positions.discard(super_food)
                 
         
         logging.info(f"Foods in map: {self.foods_in_map}")
@@ -166,62 +173,61 @@ class SnakeDomain(SearchDomain):
         
         head = state["snake_body"][0]
 
-        # Se existe foods conhecidas
-        if len(self.foods_in_map) > 0 and not self.following_plan_to_food:
-            self.goal = list(min(
-                self.foods_in_map, 
+        # If there are foods in the map
+        if ((normal_food := len(self.foods_in_map) > 0) or (EATING_SUPERFOOD and len(self.super_foods_in_map) > 0)) and not self.following_plan_to_food:
+            ## Meter para ignorar superfood de alguma maneira
+            # first objective (food)
+            goal = list(min(
+                self.foods_in_map if normal_food else self.super_foods_in_map, 
                 key=lambda pos: self.calculateDistance(head, pos, snake_traverse=state["snake_traverse"])
             ))
-            self.foods_in_map.discard(tuple(self.goal))
+            
+            # clear the list of objectives
+            self.multi_objectives.clear_goals()
+            
+            for point in self.create_list_objectives(state, goal):
+                self.multi_objectives.add_goal(point)
 
-            logging.info(f"Goal: {self.goal}")
-            # TODO: 
-            # self.multi_objectives.
-
-            self.create_problem(state, self.goal)
+            logging.info(f"Goal: {goal}")
+            self.create_problem(state)
             self.following_plan_to_food = True
 
-        # Se existe superfoods conhecidas
-        elif (self.super_foods_in_map) > 0:
-            self.goal = list(min(
-                self.super_foods_in_map, 
-                key=lambda pos: self.calculateDistance(head, pos, snake_traverse=state["snake_traverse"])
-            ))
-            self.super_foods_in_map.discard(tuple(self.goal))
-
-            logging.info(f"Goal: {self.goal}")
-            self.create_problem(state, self.goal)
-
-        # Se nao há objetivos
+        # If there are no objectives
         elif self.multi_objectives.is_empty():
-            random_point = self.random_goal_in_map(state)
+            random_point = self.closest_unknown_position(state)
             for point in self.create_list_objectives(state, random_point):
                 self.multi_objectives.add_goal(point)
             
-            # TODO: Create problem
+            self.create_problem(state)
 
-        # Se chegou ao objetivo
+        # if the snake has reached the goal
         elif head == self.multi_objectives.get_next_goal():
-            # Eliminar o objetivo atual
+
+            # If following plan to food, update the map_positions_copy
+            if self.following_plan_to_food:
+                self.foods_in_map.discard(tuple(head))
+                self.super_foods_in_map.discard(tuple(head))
+
+                self.map_positions_copy = self.map_positions.copy()
+                self.following_plan_to_food = False
+                
+            # Remove the goal from the list of objectives
             self.multi_objectives.remove_next_goal()
             
-            # Criar um novo objetivo a visitar TODO: fazer do genero do que fi<emos la em baixo
-            new_goal = self.random_goal_in_map(state)
+            # Create a new objective
+            goal_list = self.multi_objectives.get_list_of_objectives()
+            new_goal = self.create_list_objectives(state, goal_list[0], goal_list[1])[-1]
             self.multi_objectives.add_goal(new_goal)
 
-            # Criar um problema com o proximo objetivo
+            # Create a new problem
             self.create_problem(state)
         
         move = self.plan.pop(0)
+        
         ## Panic move
         if (move not in (valid_moves:=self.actions(state))):
             move = random.choice(valid_moves)
             self.plan = []
-
-        if self.following_plan_to_food and not self.plan:
-            self.map_positions_copy = self.map_positions.copy()
-            self.following_plan_to_food = False
-        key = move.key
 
         # ======================== DEBUG ========================
         print(f"\n\n{self.map_positions_copy}")
@@ -238,9 +244,12 @@ class SnakeDomain(SearchDomain):
         )
         # ======================== DEBUG ========================
 
-        return key
+        return move.key
     
     def create_problem(self, state, goal = None):
+        objectives = self.multi_objectives.get_list_of_objectives()
+        state["objectives"] = objectives[:-1]
+        goal = list(objectives[-1])
         problem = SearchProblem(self, state, goal)
         tree = SearchTree(problem, "greedy")
         result = tree.search(timeout=0.01)
@@ -255,7 +264,7 @@ class SnakeDomain(SearchDomain):
             self.plan = tree.plan()
         logging.info(f"Plan: {self.plan}")
     
-    def random_goal_in_map(self, state):
+    def closest_unknown_position(self, state):
         head = state["snake_body"][0]
         traverse = state["snake_traverse"]
         sight = state["snake_sight"]
@@ -268,8 +277,7 @@ class SnakeDomain(SearchDomain):
             key=lambda pos: self.calculateDistance(head, pos, traverse)
         )
 
-        self.map_positions_copy.discard(minPos)
-        return tuple(minPos)
+        return minPos
 
 
     def updateMapCopy(self, sight, refresh = False):
@@ -280,20 +288,27 @@ class SnakeDomain(SearchDomain):
             for col, value in cols.items():
                 self.map_positions_copy.discard((int(row), int(col)))
 
-    def create_list_objectives(self, state, goal):
+    def create_list_objectives(self, state, goal: tuple[int, int], intermediary: tuple[int, int] = None) -> list[tuple[int, int]]:  
         """"Returns a list of objectives to be achieved"""    
-        half_snake_size = len(state["snake_body"])/2
+        half_snake_size = max(3, len(state["snake_body"])/2)
         width = self.dim[0]
         height = self.dim[1]
 
-        # Random number between 0º and 360º 
-        theta1 = random.random() * 2 * math.pi
-        x_1 = ( goal[0] + int( half_snake_size * math.cos(theta1)) ) % width
-        y_1 = ( goal[1] + int( half_snake_size * math.sin(theta1)) ) % height
+        x_1, y_1 = intermediary if intermediary is not None else (None, None)
+
+        if intermediary is None:
+            # Random number between 0º and 360º 
+            theta1 = random.random() * 2 * math.pi
+            x_1 = ( goal[0] + int( half_snake_size * math.cos(theta1)) ) % width
+            y_1 = ( goal[1] + int( half_snake_size * math.sin(theta1)) ) % height
+        else:
+            theta1 = math.atan2(y_1 - goal[1], x_1 - goal[0])
 
         # Random number between 45º and 315º 
         theta2 = math.pi/4 + random.random() * ( 2 * math.pi - math.pi / 2)
-        x_2 = ( x_1[0] + int( half_snake_size * math.cos(theta2)) ) % width 
-        y_2 = ( y_1[1] + int( half_snake_size * math.sin(theta2)) ) % height
+        x_2 = ( x_1 + int( half_snake_size * math.cos(theta2)) ) % width 
+        y_2 = ( y_1 + int( half_snake_size * math.sin(theta2)) ) % height
 
-        return [goal, (x_1, y_1), (x_2, y_2)]
+        logging.info(f"Objectives: {goal}, {x_1, y_1}, {x_2, y_2}")
+
+        return [goal, [x_1, y_1], [x_2, y_2]]
