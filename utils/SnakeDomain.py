@@ -109,6 +109,7 @@ class SnakeDomain(SearchDomain):
             "snake_sight": state["snake_sight"],
             "objectives": [] if not state["objectives"] else state["objectives"] if new_head != state["objectives"][0] else state["objectives"][1:]
         }
+        logging.info(f"New state in result function: {newstate}")
         return newstate
 
     def cost(self, state, action):
@@ -121,9 +122,10 @@ class SnakeDomain(SearchDomain):
         
         
         if objectives:
-            logging.info(f"objective: {objectives}")
+            logging.info(f"Objectives in heuristic function: {objectives}")
             return self.calculateDistance(snake_head, objectives[0], snake_traverse)
         else:
+            logging.info(f"There are no ojectives, returning distance to goal: {goal}")
             return self.calculateDistance(snake_head, goal, snake_traverse)
 
     def calculateDistance(self, start, end, snake_traverse):
@@ -188,7 +190,7 @@ class SnakeDomain(SearchDomain):
             for point in self.create_list_objectives(state, goal):
                 self.multi_objectives.add_goal(point)
 
-            logging.info(f"Goal: {goal}")
+            logging.info(f"Food Position: {goal}")
             self.create_problem(state)
             self.following_plan_to_food = True
 
