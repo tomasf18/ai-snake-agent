@@ -123,7 +123,7 @@ class SnakeDomain(SearchDomain):
         
         if objectives:
             logging.info(f"Objectives in heuristic function: {objectives}")
-            return self.calculateDistance(snake_head, objectives[0], snake_traverse)
+            return len(objectives)*10 + self.calculateDistance(snake_head, objectives[0], snake_traverse)
         else:
             logging.info(f"There are no ojectives, returning distance to goal: {goal}")
             return self.calculateDistance(snake_head, goal, snake_traverse)

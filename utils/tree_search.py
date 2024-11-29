@@ -184,14 +184,6 @@ class SearchTree:
                     self.highest_cost_nodes = [newnode]
                 elif newnode.cost == self.highest_cost_nodes[0].cost:
                     self.highest_cost_nodes.append(newnode)
-                
-                # check if new_state is one of the objectives, if so, lnewnodes will contain only that node and clear open_nodes and break
-                if node.state["objectives"] and (newstate["snake_body"][0] == node.state["objectives"][0]):
-                    logging.info(f"REACHED THE FIRST OBJECTIVE: {newstate['snake_body'][0]} AND CLEARED OPEN_NODES")
-                    self.open_nodes.clear()
-                    logging.info(f"OPEN_NODES CLEARED: {self.open_nodes}")
-                    lnewnodes = [newnode]
-                    break
 
             self.add_to_open(lnewnodes)
         return None
