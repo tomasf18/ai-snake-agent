@@ -140,14 +140,14 @@ class SearchTree:
 
     # procurar a solucao
     def search(self, limit=None, timeout=None):
-        
-        logging.info("Starting search with snake_body: " + str(self.problem.initial["snake_body"]) + " and goal: " + str(self.problem.goal))
+        logging.info("Searching Method (Tree search)")
+        logging.info("\tStarting search with snake_body: " + str(self.problem.initial["snake_body"]) + " and goal: " + str(self.problem.goal))
         
         start_time = time.time()
         
         while self.open_nodes != []:
             
-            logging.info(f"TIMEOUT TIME: {time.time() - start_time}")
+            logging.info(f"\tTIMEOUT TIME: {(time.time() - start_time) * 1000} ms")
             if timeout and (time.time() - start_time) > timeout:
                 logging.info("Timeout reached")
                 return None
