@@ -130,7 +130,7 @@ class SnakeDomain(SearchDomain):
         
         # penalty for positions visited recently
         if tuple(snake_head) in self.recent_explored_positions:
-            known_position_penalty = 1
+            known_position_penalty = 5
         
         return distance + known_position_penalty
 
@@ -188,7 +188,7 @@ class SnakeDomain(SearchDomain):
                 key=lambda pos: self.calculateDistance(head, pos, snake_traverse)
             ))
 
-            logging.info(f"Goal: {self.goal}")
+            logging.info(f"Food goal: {self.goal}")
             self.create_problem(state, self.goal)
             self.following_plan_to_food = True
             
@@ -200,12 +200,13 @@ class SnakeDomain(SearchDomain):
             ))
             self.super_foods_in_map.discard(tuple(self.goal))
 
-            logging.info(f"Goal: {self.goal}")
+            logging.info(f"Superfood goal: {self.goal}")
             self.create_problem(state, self.goal)
         
-        # 5. If we don't have a goal, we choose a random goal in the map
+        # 5. If we don't have a goal, we choose a new one
         elif not self.plan:
             self.goal = list(self.find_goal(state))
+            logging.info(f"New goal: {self.goal}")
             self.create_problem(state, self.goal)
         
         move = self.plan.pop(0)
@@ -269,7 +270,7 @@ class SnakeDomain(SearchDomain):
         return tuple(selected_position)
     
     def calculate_region_density(self, position, radius):
-        """Function to calculate the density of inexplore and closest positions in a region of the map"""
+        """Function to calculate the density of inexplored positions in a region of the map"""
         x, y = position
         density = 0
         for dx in range(-radius, radius + 1):
@@ -288,10 +289,7 @@ class SnakeDomain(SearchDomain):
 
         for row, cols in sight.items():
             for col, value in cols.items():
-                self.map_positions_copy.discard((int(row), int(col)))
-                self.recent_explored_positions.append((int(row), int(col)))
-                
-    def updateRecentExploredPositions(self, sight):
-        for row, cols in sight.items():
-            for col, value in cols.items():
-                self.recent_explored_positions.append((int(row), int(col)))
+                pos = (int(row), int(col))
+                if pos in self.map_positions_copy:
+                    self.map_positions_copy.discard(pos)
+                    self.recent_explored_positions.append(pos)
