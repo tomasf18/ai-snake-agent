@@ -1,3 +1,4 @@
+from collections import deque
 import pprint
 from utils.tree_search import *
 from utils.Directions import DIRECTION
@@ -25,6 +26,7 @@ class SnakeDomain(SearchDomain):
         self.board_copy: list[list[int]] = map["map"]
         self.map_positions: set = set()
         self.map_positions_copy: set = set()
+        self.recent_explored_positions: deque[tuple[int, int]] = deque()
         self.plan = []
         self.following_plan_to_food = False
         self.foods_in_map: set = set()
@@ -43,6 +45,7 @@ class SnakeDomain(SearchDomain):
                     self.map_positions_copy.add((x, y))
                 if self.board[x][y] == consts.Tiles.FOOD:
                     self.foods_in_map.add((x, y))
+        self.recent_explored_positions = deque(maxlen=len(self.map_positions) // 2) # 50% of the map
         
 
     def actions(self, state) -> list[DIRECTION]:
@@ -122,7 +125,14 @@ class SnakeDomain(SearchDomain):
         snake_head = new_state["snake_body"][0]
         snake_traverse = new_state["snake_traverse"]
         
-        return self.calculateDistance(snake_head, goal, snake_traverse)
+        distance = self.calculateDistance(snake_head, goal, snake_traverse)
+        known_position_penalty = 0
+        
+        # penalty for positions visited recently
+        if tuple(snake_head) in self.recent_explored_positions:
+            known_position_penalty = 1
+        
+        return distance + known_position_penalty
 
     def calculateDistance(self, start, end, snake_traverse):
         dx = abs((end[0] - start[0]))
@@ -150,7 +160,8 @@ class SnakeDomain(SearchDomain):
         snake_traverse = state["snake_traverse"]
         snake_sight = state["snake_sight"]
         
-        # 1. We remove the snake_sight from the known positions in map_positions_copy
+        # 1. We remove the snake_sight from the known positions in map_positions_copy 
+        # and update the recent_explored_positions
         self.updateMapCopy(snake_sight)
         
         # 2. We check if there are new foods/superfoods in sight
@@ -194,7 +205,7 @@ class SnakeDomain(SearchDomain):
         
         # 5. If we don't have a goal, we choose a random goal in the map
         elif not self.plan:
-            self.goal = list(self.random_goal_in_map(state))
+            self.goal = list(self.find_goal(state))
             self.create_problem(state, self.goal)
         
         move = self.plan.pop(0)
@@ -211,7 +222,6 @@ class SnakeDomain(SearchDomain):
             self.following_plan_to_food = False
 
         # ================== DEBUGGING ================== #
-        print(f"\n\n{self.map_positions_copy}")
         tf: float = time.time()
         dt: float = tf - ti 
         diff_to_server = tf - datetime.datetime.fromisoformat(snake.timestamp).timestamp()
@@ -229,40 +239,59 @@ class SnakeDomain(SearchDomain):
     
     
     def create_problem(self, state, goal):
+        valid_moves = self.actions(state)
         problem = SearchProblem(self, state, goal)
         tree = SearchTree(problem, "greedy")
         result = tree.search(timeout=0.01)
         if result is None:
             logging.error(f"No solution found, goal: {goal}, state: {state}")
-            valid_moves = self.actions(state)
             if valid_moves:
                 self.plan = [random.choice(valid_moves)]
             else:
                 raise Exception("No valid moves")
+        elif result == []:
+            self.plan = [random.choice(valid_moves)]
         else:
             self.plan = tree.plan()
         logging.info(f"Plan: {self.plan}")
     
-    def random_goal_in_map(self, state):
-        head = state["snake_body"][0]
-        traverse = state["snake_traverse"]
+    def find_goal(self, state):
         sight = state["snake_sight"]
 
         if len(self.map_positions_copy) == 0:
             self.updateMapCopy(sight, refresh=True)
 
-        minPos = min(
-            self.map_positions_copy, 
-            key=lambda pos: self.calculateDistance(head, pos, traverse)
+        selected_position = max(
+            self.map_positions_copy,
+            key=lambda pos: self.calculate_region_density(pos, 3)
         )
 
-        return tuple(minPos)
+        return tuple(selected_position)
+    
+    def calculate_region_density(self, position, radius):
+        """Function to calculate the density of inexplore and closest positions in a region of the map"""
+        x, y = position
+        density = 0
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                neighbor = ((x + dx) % self.dim[0], (y + dy) % self.dim[1])
+                if neighbor in self.map_positions:
+                    density += 1
+        return density
 
 
     def updateMapCopy(self, sight, refresh = False):
         if refresh:
             self.map_positions_copy = self.map_positions.copy()
+            for pos in self.recent_explored_positions:
+                self.map_positions_copy.discard(pos)
 
         for row, cols in sight.items():
             for col, value in cols.items():
                 self.map_positions_copy.discard((int(row), int(col)))
+                self.recent_explored_positions.append((int(row), int(col)))
+                
+    def updateRecentExploredPositions(self, sight):
+        for row, cols in sight.items():
+            for col, value in cols.items():
+                self.recent_explored_positions.append((int(row), int(col)))
