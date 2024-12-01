@@ -14,7 +14,7 @@ import logging
 
 logging.basicConfig(
     filename="project.log",
-    filemode="a",
+    filemode="w",
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.DEBUG,
 )
@@ -35,6 +35,7 @@ class SnakeDomain(SearchDomain):
         self.super_foods_in_map: set = set()
         self.goal = None
         self.multi_objectives = MultiObjectiveSearch([])
+        self.counter = 0
 
         # Debugging
         self.maxDist = 0
@@ -274,6 +275,7 @@ class SnakeDomain(SearchDomain):
 
                 self.updateMapCopy(state["snake_sight"], refresh=True)
                 self.following_plan_to_food = False
+                self.counter += 1
 
             # Remove the goal from the list of objectives
             # self.multi_objectives.remove_next_goal()
@@ -403,18 +405,22 @@ class SnakeDomain(SearchDomain):
         """Function to calculate the density of inexplored positions in a region of the map"""
         x, y = position
         density = 0
+        valid_neighbors = (2 * radius + 1) ** 2
         for dx in range(-radius, radius + 1):
             for dy in range(-radius, radius + 1):
                 neighbor = ((x + dx) % self.dim[0], (y + dy) % self.dim[1])
+                if self.board[neighbor[0]][neighbor[1]] == consts.Tiles.STONE:
+                    valid_neighbors -= 1 
                 if neighbor in self.map_positions:
                     density += 1
-        return density
+        return density / valid_neighbors
     
     def updateMapCopy(self, sight, refresh = False):
-        if refresh:
+        if refresh and self.counter == 2:
             self.map_positions_copy = self.map_positions.copy()
             for pos in self.recent_explored_positions:
                 self.map_positions_copy.discard(pos)
+                self.counter = 0
         
         for row, cols in sight.items():
             for col, value in cols.items():
