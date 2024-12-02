@@ -278,7 +278,7 @@ class Game:
                             SuperFood.TRAVERSE,
                         ]
                     )
-                    logger.debug("Snake <%s> ate <%s>", name1, kind.name)
+                    logger.debug("Snake <%s> ate <%s> at position (%s)", name1, kind.name, snake1.head)
 
                     if kind == SuperFood.POINTS:
                         points = random.randint(-5, 10)
