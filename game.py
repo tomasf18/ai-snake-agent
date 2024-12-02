@@ -281,15 +281,20 @@ class Game:
                     logger.debug("Snake <%s> ate <%s>", name1, kind.name)
 
                     if kind == SuperFood.POINTS:
-                        snake1.score += random.randint(-5, 10)
+                        points = random.randint(-5, 10)
+                        snake1.score += points 
+                        logger.debug("Snake ate superfood and scored: %s", points)
                     elif kind == SuperFood.LENGTH:
                         extra = random.randint(-2, 2)
                         snake1.grow(extra)
+                        logger.debug("Snake ate superfood and grew: %s", extra)
                     elif kind == SuperFood.RANGE:
                         snake1.range += random.randint(-2, 2)
                         snake1.range = min(max(snake1.range, 2), 6) # range between 2 and 6
+                        logger.debug("Snake ate superfood and range changed to: %s", snake1.range)
                     elif kind == SuperFood.TRAVERSE:
                         snake1._traverse = not snake1._traverse
+                        logger.debug("Snake ate superfood and traverse is: %s", snake1._traverse)
 
     async def next_frame(self):
         await asyncio.sleep(1.0 / self._game_speed)
