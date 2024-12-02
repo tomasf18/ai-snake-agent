@@ -5,6 +5,7 @@ from utils.multi_objective_search import MultiObjectiveSearch
 from utils.tree_search import *
 from utils.Directions import DIRECTION
 from utils.snake import Snake
+from utils.tree_search import SearchNode
 import time
 import datetime
 import consts
@@ -30,6 +31,7 @@ class SnakeDomain(SearchDomain):
         self.map_positions_copy: set = set()
         self.recent_explored_positions: deque[tuple[int, int]] = deque()
         self.plan = []
+        self.state_plan: list[SearchNode] = []
         self.following_plan_to_food = False
         self.foods_in_map: set = set()
         self.super_foods_in_map: set = set()
@@ -193,6 +195,7 @@ class SnakeDomain(SearchDomain):
             "snake_traverse": snake.snake_traverse,
             "snake_sight": snake.snake_sight,
             "objectives": self.multi_objectives.get_list_of_objectives(),
+            "timestamp": datetime.datetime.fromisoformat(snake.timestamp).timestamp(),
         }
 
         # 1. Update the map removing the snake sight
@@ -293,10 +296,19 @@ class SnakeDomain(SearchDomain):
             self.create_problem(state)
 
         move = self.plan.pop(0)
+        # move_state = self.state_plan.pop(0)
+
+        # if move_state["snake_body"][0] != head:
+        #     logging.error(f"head = {head}")
+        #     logging.error(f"Wrong head position")
+        #     logging.error(f"move: {move_state}")
+        #     logging.error(f"move state.staet {move_state.state}")
 
         ## Panic move (In case a snake appears in front or traverse switch)
         if move not in (valid_moves := self.actions(state)):
-            logging.info("PANIC MOVE!")
+            logging.error(f"PANIC MOVE! move = {move}, valid_moves = {valid_moves}, state = {state}")
+            logging.error(f"complete plan = {self.__backup_of_plan}")
+            logging.error(f"Self = {self.__dict__}")
             move = random.choice(valid_moves)
             self.following_plan_to_food = False
             self.multi_objectives.clear_goals()
@@ -322,65 +334,43 @@ class SnakeDomain(SearchDomain):
 
     def create_problem(self, state, goal=None):
         logging.info("Create Problem method")
+
         objectives = self.multi_objectives.get_list_of_objectives()
         state["objectives"] = objectives[:-1]
         goal = list(objectives[-1])
+
+        TOLERANCE = 0.01 # 10 ms
+        timeout = self.time_per_frame - time.time() + state["timestamp"] - TOLERANCE
+
         problem = SearchProblem(self, state, goal)
         tree = SearchTree(problem, "greedy")
-        result = tree.search(timeout=0.05)
+        result = tree.search(timeout=timeout)
+
         if result is None:
             logging.error(f"\tNo solution found, goal: {goal}, state: {state}")
             self.multi_objectives.clear_goals()  # No move found, so assume its not possible and reset objectives
             self.following_plan_to_food = False
             valid_moves = self.actions(state)
-            if valid_moves:
+            logging.info(f"\tValid moves: {valid_moves}")
+            if self.plan: # If  still has a backup plan
+                logging.info(f"\tChose backup plan {self.plan}")
+                return
+            elif valid_moves:
                 move = random.choice(valid_moves)
-                logging.info(f"\tChose random move {move}")
+                logging.info(f"\tChose valid move: {move}")
                 self.plan = [move]
             else:
                 raise Exception("No valid moves")
         else:
             self.plan = tree.plan()
+            self.state_plan = tree.path()
+            self.__backup_of_plan = self.plan.copy()
         logging.info(f"\tPlan: {self.plan}")
 
-    def __create_list_objectives(
-        self, state, goal: list[int], intermediary: tuple[int, int] | None = None
-    ) -> list[list[int]]:
-        """Returns a list of objectives to be achieved"""
-        logging.info("Create List Objectives method")
-        half_snake_size = max(3, len(state["snake_body"]) / 2)
-        width = self.dim[0]
-        height = self.dim[1]
-
-        x_1, y_1 = intermediary if intermediary is not None else (0, 0)
-
-        if intermediary is None:
-            # Random number between 0º and 360º
-            theta1 = random.random() * 2 * math.pi
-            x_1 = (goal[0] + int(half_snake_size * math.cos(theta1))) % width
-            y_1 = (goal[1] + int(half_snake_size * math.sin(theta1))) % height
-        else:
-            theta1 = math.atan2(y_1 - goal[1], x_1 - goal[0])
-
-        # Random number between 45º and 315º
-        theta2 = math.pi / 4 + random.random() * (2 * math.pi - math.pi / 2)
-        x_2 = (x_1 + int(half_snake_size * math.cos(theta2))) % width
-        y_2 = (y_1 + int(half_snake_size * math.sin(theta2))) % height
-
-        logging.info(f"\tObjectives: {goal}, {x_1, y_1}, {x_2, y_2}")
-
-        return [list(goal), [x_1, y_1], [x_2, y_2]]
 
     def create_list_objectives(self, state, goal):
-        half_snake_size = max(3, len(state["snake_body"]) / 2)
-        width = self.dim[0]
-        height = self.dim[1]
-
-        head = state["snake_body"][0]
-
-        theta1 = random.random() * 2 * math.pi
-        x_1 = (goal[0] + int(half_snake_size * math.cos(theta1))) % width
-        y_1 = (goal[1] + int(half_snake_size * math.sin(theta1))) % height
+        """Get list of objectives to goal (currently going to the tail of the snake)"""
+        x_1, y_1 = state["snake_body"][-1]
 
         return [
             list(goal),

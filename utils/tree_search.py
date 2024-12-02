@@ -107,6 +107,9 @@ class SearchTree:
         path = self.get_path(node.parent)
         path += [node.state]
         return path
+
+    def path(self):
+        return self.get_path(self.solution)
     
     def plan(self):
         return self.get_plan(self.solution)
