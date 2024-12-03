@@ -32,6 +32,8 @@ class Snake:
         in_range = mapa.get_zone(self.head, self.range)
 
         for snake in snakes:  # mark all snakes in the map
+            if not snake.alive:
+                continue  # ignore dead snakes
             for x, y in snake.body:
                 if x in in_range and y in in_range[x]:
                     in_range[x][y] = Tiles.SNAKE
