@@ -38,7 +38,7 @@ class SnakeDomain(SearchDomain):
         self.following_plan_to_food = False
         self.foods_in_map: set = set()
         self.super_foods_in_map: set = set()
-        self.goal = None
+        # self.goal = None
         self.multi_objectives = MultiObjectiveSearch([])
         self.counter = 0
 
@@ -217,6 +217,9 @@ class SnakeDomain(SearchDomain):
                 self.super_foods_in_map.add(super_food)
 
         head = state["snake_body"][0]
+        
+        logging.info(f"\nfoods_in_map: {self.foods_in_map}")
+        logging.info(f"super_foods_in_map: {self.super_foods_in_map}\n")
 
         # logging.info(f"\tSnake head: {head}")
         # if not self.multi_objectives.is_empty():
@@ -260,8 +263,8 @@ class SnakeDomain(SearchDomain):
                 )
 
             logging.info(f"\tFood Position: {goal}")
-            self.create_problem(state)
             self.following_plan_to_food = True
+            self.create_problem(state)
 
         # If there are no objectives (Normally first move)
         elif self.multi_objectives.is_empty():
