@@ -1,4 +1,5 @@
 from collections import deque
+from hmac import new
 import math
 import pprint
 from utils.multi_objective_search import MultiObjectiveSearch
@@ -115,7 +116,8 @@ class SnakeDomain(SearchDomain):
         for i in range(len(snake_body) - 1):
             new_snake_body.append(snake_body[i])
 
-        if self.board[new_head[0]][new_head[1]] == consts.Tiles.FOOD:
+        # if the new head is in a food position, we add a new body part to the snake
+        if (new_head[0], new_head[1]) in self.foods_in_map:
             new_snake_body.append(snake_body[-1])
 
         newstate = {
