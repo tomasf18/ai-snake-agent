@@ -1,0 +1,88 @@
+2024-12-03 17:36:26,282 - asyncio - DEBUG - Using selector: EpollSelector
+2024-12-03 17:36:26,283 - Game - INFO - Game(level=1)
+2024-12-03 17:36:26,283 - Map - INFO - Generating a MAP
+2024-12-03 17:36:26,283 - Server - INFO - Listenning @ :8000
+2024-12-03 17:36:26,286 - Server - INFO - Waiting for players
+2024-12-03 17:36:26,408 - Server - INFO - Viewer connected
+2024-12-03 17:36:29,238 - Server - INFO - <danilo> has joined
+2024-12-03 17:36:29,238 - Server - INFO - Starting game
+2024-12-03 17:36:29,238 - Game - INFO - Game(level=1)
+2024-12-03 17:36:29,238 - Map - INFO - Generating a MAP
+2024-12-03 17:36:29,239 - Game - DEBUG - Reset world
+2024-12-03 17:36:29,239 - Map - DEBUG - Food spawned at (38, 22)
+2024-12-03 17:36:29,239 - Map - DEBUG - Food spawned at (16, 10)
+2024-12-03 17:36:29,239 - Map - DEBUG - Food spawned at (17, 19)
+2024-12-03 17:36:29,239 - Map - DEBUG - Food spawned at (36, 11)
+2024-12-03 17:36:30,555 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:30,555 - Map - DEBUG - Food spawned at (16, 11)
+2024-12-03 17:36:30,656 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:30,656 - Map - DEBUG - Food spawned at (42, 18)
+2024-12-03 17:36:32,172 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:32,172 - Map - DEBUG - Food spawned at (14, 21)
+2024-12-03 17:36:34,804 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:34,804 - Map - DEBUG - Food spawned at (26, 23)
+2024-12-03 17:36:36,119 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:36,119 - Map - DEBUG - Food spawned at (39, 16)
+2024-12-03 17:36:39,351 - Map - DEBUG - Food spawned at (25, 12)
+2024-12-03 17:36:39,351 - Game - DEBUG - [100] SCORE danilo: 5
+2024-12-03 17:36:39,351 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:39,351 - Map - DEBUG - Food spawned at (35, 17)
+2024-12-03 17:36:40,969 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:40,969 - Map - DEBUG - Food spawned at (33, 1)
+2024-12-03 17:36:42,992 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:42,993 - Map - DEBUG - Food spawned at (44, 15)
+2024-12-03 17:36:43,499 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:43,499 - Map - DEBUG - Food spawned at (36, 3)
+2024-12-03 17:36:44,308 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:44,308 - Map - DEBUG - Food spawned at (11, 20)
+2024-12-03 17:36:44,813 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:44,813 - Map - DEBUG - Food spawned at (24, 12)
+2024-12-03 17:36:46,833 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:46,834 - Map - DEBUG - Food spawned at (24, 0)
+2024-12-03 17:36:49,462 - Map - DEBUG - Food spawned at (25, 4)
+2024-12-03 17:36:49,462 - Game - DEBUG - [200] SCORE danilo: 12
+2024-12-03 17:36:50,172 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:50,172 - Map - DEBUG - Food spawned at (33, 21)
+2024-12-03 17:36:50,676 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:50,677 - Map - DEBUG - Food spawned at (45, 8)
+2024-12-03 17:36:52,298 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:52,298 - Map - DEBUG - Food spawned at (13, 11)
+2024-12-03 17:36:54,217 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:54,217 - Map - DEBUG - Food spawned at (39, 10)
+2024-12-03 17:36:56,035 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:56,035 - Map - DEBUG - Food spawned at (0, 4)
+2024-12-03 17:36:56,340 - Game - DEBUG - Snake <danilo> ate <RANGE>
+2024-12-03 17:36:59,580 - Map - DEBUG - Food spawned at (22, 17)
+2024-12-03 17:36:59,580 - Game - DEBUG - [300] SCORE danilo: 17
+2024-12-03 17:36:59,681 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:36:59,682 - Map - DEBUG - Food spawned at (47, 11)
+2024-12-03 17:37:00,492 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:00,493 - Map - DEBUG - Food spawned at (21, 7)
+2024-12-03 17:37:01,606 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:01,606 - Map - DEBUG - Food spawned at (47, 14)
+2024-12-03 17:37:09,698 - Map - DEBUG - Food spawned at (11, 15)
+2024-12-03 17:37:09,698 - Game - DEBUG - [400] SCORE danilo: 20
+2024-12-03 17:37:09,698 - Game - DEBUG - Snake <danilo> ate <POINTS>
+2024-12-03 17:37:13,238 - Game - DEBUG - Snake <danilo> ate <POINTS>
+2024-12-03 17:37:15,463 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:15,463 - Map - DEBUG - Food spawned at (47, 22)
+2024-12-03 17:37:15,970 - Game - DEBUG - Snake <danilo> ate <RANGE>
+2024-12-03 17:37:19,809 - Map - DEBUG - Food spawned at (18, 22)
+2024-12-03 17:37:19,809 - Game - DEBUG - [500] SCORE danilo: 19
+2024-12-03 17:37:26,170 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:26,171 - Map - DEBUG - Food spawned at (28, 23)
+2024-12-03 17:37:29,909 - Map - DEBUG - Food spawned at (3, 6)
+2024-12-03 17:37:29,910 - Game - DEBUG - [600] SCORE danilo: 20
+2024-12-03 17:37:32,540 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:32,540 - Map - DEBUG - Food spawned at (9, 22)
+2024-12-03 17:37:33,958 - Game - DEBUG - Snake <danilo> ate <LENGTH>
+2024-12-03 17:37:38,012 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:38,012 - Map - DEBUG - Food spawned at (12, 8)
+2024-12-03 17:37:40,034 - Map - DEBUG - Food spawned at (7, 23)
+2024-12-03 17:37:40,034 - Game - DEBUG - [700] SCORE danilo: 22
+2024-12-03 17:37:41,351 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:41,351 - Map - DEBUG - Food spawned at (40, 4)
+2024-12-03 17:37:47,020 - Game - DEBUG - Snake <danilo> ate food
+2024-12-03 17:37:47,021 - Map - DEBUG - Food spawned at (2, 6)
+2024-12-03 17:37:50,162 - Map - DEBUG - Food spawned at (9, 18)
+2024-12-03 17:37:50,162 - Game - DEBUG - [800] SCORE danilo: 24

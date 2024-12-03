@@ -27,7 +27,9 @@ class SnakeDomain(SearchDomain):
         self.time_per_frame: float = 1 / int(map["fps"])
         self.board: list[list[int]] = map["map"]
         self.board_copy: list[list[int]] = map["map"]
-        self.map_positions: set = set()
+        
+        # (x, y): count
+        self.map_positions: dict = {}
         self.map_positions_copy: set = set()
         self.recent_explored_positions: deque[tuple[int, int]] = deque()
         self.plan = []
@@ -47,7 +49,7 @@ class SnakeDomain(SearchDomain):
         for x in range(self.dim[0]):
             for y in range(self.dim[1]):
                 if self.board[x][y] != consts.Tiles.STONE:
-                    self.map_positions.add((x, y))
+                    self.map_positions[(x, y)] = 0
                     self.map_positions_copy.add((x, y))
                 if self.board[x][y] == consts.Tiles.FOOD:
                     self.foods_in_map.add((x, y))
@@ -312,6 +314,7 @@ class SnakeDomain(SearchDomain):
             move = random.choice(valid_moves)
             self.following_plan_to_food = False
             self.multi_objectives.clear_goals()
+            self.plan = []
 
         # ======================== DEBUG ========================
         # print(f"\n\n{self.map_positions_copy}")
@@ -386,7 +389,7 @@ class SnakeDomain(SearchDomain):
 
         selected_position = max(
             self.map_positions_copy,
-            key=lambda pos: self.calculate_region_density(pos, 3) 
+            key=lambda pos: self.calculate_region_density(pos, 3) / (self.map_positions[pos] + 1),
         )
 
         return selected_position
@@ -407,7 +410,7 @@ class SnakeDomain(SearchDomain):
     
     def updateMapCopy(self, sight, refresh = False):
         if refresh and self.counter == 2:
-            self.map_positions_copy = self.map_positions.copy()
+            self.map_positions_copy = set(self.map_positions.keys())
             for pos in self.recent_explored_positions:
                 self.map_positions_copy.discard(pos)
                 self.counter = 0
@@ -416,6 +419,7 @@ class SnakeDomain(SearchDomain):
             for col, value in cols.items():
                 pos = (int(row), int(col))
                 if pos in self.map_positions_copy:
+                    self.map_positions[pos] += 1
                     self.map_positions_copy.discard(pos)
                     if pos not in self.recent_explored_positions:
                         self.recent_explored_positions.append(pos)
