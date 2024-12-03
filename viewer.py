@@ -44,6 +44,7 @@ def should_quit():
 
 
 async def main(SCALE):
+    STEP = 0
     logging.info("Waiting for map information from server")
     while True:
         try:
@@ -77,9 +78,11 @@ async def main(SCALE):
             pprint.pprint(state)
 
             if "snakes" in state and "food" in state:
+                global step
                 snakes_update = state["snakes"]
                 foods_update = state["food"]
                 foods_update = state["food"]
+                STEP = state["step"]
             elif "highscores" in state:
                 all_sprites.add(
                     ScoreBoardSprite(
@@ -137,6 +140,7 @@ async def main(SCALE):
                     score=snake["score"],
                     name=snake["name"],
                     traverse=snake["traverse"],
+                    step=STEP
                 )
                 for snake in snakes_update
             }
@@ -162,6 +166,8 @@ async def main(SCALE):
                 )
                 snakes[snake["name"]].score = snake["score"]
                 snakes[snake["name"]].traverse = snake["traverse"]
+                snakes[snake["name"]].step=STEP
+                
 
             # Remove dead snakes
             for snake in snakes.values():
