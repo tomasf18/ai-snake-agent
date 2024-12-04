@@ -386,7 +386,7 @@ class SnakeDomain(SearchDomain):
         if result is None:
             logging.error(f"\tNo solution found, goal: {goal}, state: {state}")
             if self.following_plan_to_food and not state["snake_traverse"]:
-                food = set(objectives[0])
+                food = tuple(objectives[0])
                 self.forgotten_foods.add((food, state["food_type"]))
                 self.foods_in_map.discard(food)
                 self.super_foods_in_map.discard(food)
