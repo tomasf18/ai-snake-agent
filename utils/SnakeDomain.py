@@ -94,7 +94,7 @@ class SnakeDomain(SearchDomain):
             # # If new_position is adjacent to snake, better be safe
             for dir_1 in DIRECTION:
                 pos = dir_1 + new_position
-                if sight.get(str(pos[0]), {}).get(str(pos[1]), 0) == consts.Tiles.SNAKE:
+                if sight.get(str(pos[0] % self.dim[0]), {}).get(str(pos[1] % self.dim[1]), 0) == consts.Tiles.SNAKE:
                     continue
 
             if (
