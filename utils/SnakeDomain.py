@@ -31,20 +31,24 @@ class SnakeDomain(SearchDomain):
         self.map_positions: dict = {}
         self.map_positions_copy: set = set()
         self.recent_explored_positions: deque[tuple[int, int]] = deque()
+
         self.plan = []
         self.state_plan: list[SearchNode] = []
+
+        # Foods
         self.following_plan_to_food = False
         self.foods_in_map: set = set()
         self.super_foods_in_map: set = set()
-        # self.goal = None
+        self.forgotten_foods: set = set()
+
+        
         self.multi_objectives = MultiObjectiveSearch([])
         self.counter = 0
 
-        self.superfood_eaten = 0
-        self.food_eaten = 0
-
         # Debugging
         self.maxDist = 0
+        self.superfood_eaten = 0
+        self.food_eaten = 0
         
         
     async def startupMap(self):
@@ -85,7 +89,7 @@ class SnakeDomain(SearchDomain):
                 continue
 
             sight = state["snake_sight"]
-            if sight.get(new_position[0], {}).get(new_position[1], 0) == consts.Tiles.SNAKE:
+            if sight.get(str(new_position[0]), {}).get(str(new_position[1]), 0) == consts.Tiles.SNAKE:
                 continue
 
             if (
@@ -151,7 +155,6 @@ class SnakeDomain(SearchDomain):
         # logging.info("Heuristic method")
         snake_head = new_state["snake_body"][0]
         snake_traverse = new_state["snake_traverse"]
-        snake_sight = new_state["snake_sight"]
         objectives = new_state["objectives"]
         heuristic = 0
 
@@ -164,15 +167,8 @@ class SnakeDomain(SearchDomain):
                     objectives[i], objectives[i + 1], snake_traverse
                 )
             heuristic += self.calculateDistance(objectives[-1], goal, snake_traverse)
-
-            # logging.info(
-            #     f"\tObjectives in heuristic function: {objectives} (Goal = {goal}) with an heuristic of {heuristic}"
-            # )
             return heuristic
         else:
-            # logging.info(
-            #     f"\tThere are no ojectives, returning distance to goal: {goal}"
-            # )
             heuristic += self.calculateDistance(snake_head, goal, snake_traverse)
             return heuristic
 
@@ -207,6 +203,12 @@ class SnakeDomain(SearchDomain):
             "timestamp": datetime.datetime.fromisoformat(snake.timestamp).timestamp(),
             "grow": 0,
         }
+
+        # Remove self from sight
+        for row, cols in snake.snake_sight.items():
+            for col, value in cols.items():
+                if [int(row), int(col)] in snake.snake:
+                    state["snake_sight"][row][col] = consts.Tiles.PASSAGE
         
         snake_range = snake.snake_range
         step = snake.step
@@ -257,7 +259,20 @@ class SnakeDomain(SearchDomain):
         )
 
         closest_food = self.get_closest_food(state=state, normal_food=normal_food) if exists_food_in_map else None
-        if exists_food_in_map and (not self.following_plan_to_food or 
+
+        if 0 < len(self.forgotten_foods) and state["snake_traverse"]:
+            food, food_type = self.forgotten_foods.pop()
+            logging.info(f"Following plan to forgotten food {food} of type {food_type}")
+
+            self.multi_objectives.clear_goals()
+            for point in self.create_list_objectives(state, food):
+                self.multi_objectives.add_goal(point)
+
+            state["food_type"] = food_type
+            self.following_plan_to_food = True
+            self.create_problem(state)
+
+        elif exists_food_in_map and (not self.following_plan_to_food or 
             self.calculateDistance(head, closest_food, snake.snake_traverse) < 
             self.calculateDistance(head, self.multi_objectives.get_next_goal(), snake.snake_traverse)
         ):
@@ -344,7 +359,7 @@ class SnakeDomain(SearchDomain):
         )
         if diff_to_server > self.maxDist:
             self.maxDist = diff_to_server
-        logging.error(
+        logging.info(
             "\tgetNextMove time to compute %.2fms (diff to server %.2fms (max diff %.2fms))",
             dt * 1000,
             diff_to_server * 1000,
@@ -370,6 +385,12 @@ class SnakeDomain(SearchDomain):
 
         if result is None:
             logging.error(f"\tNo solution found, goal: {goal}, state: {state}")
+            if self.following_plan_to_food and not state["snake_traverse"]:
+                goal = objectives[-1]
+                self.forgotten_foods.add((goal, state["food_type"]))
+                self.foods_in_map.discard(goal)
+                self.super_foods_in_map.discard(goal)
+
             self.multi_objectives.clear_goals()  # No move found, so assume its not possible and reset objectives
             self.following_plan_to_food = False
             valid_moves = self.actions(state)

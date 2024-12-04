@@ -3,6 +3,7 @@ import datetime
 import getpass
 import json
 import os
+import time
 import websockets # type: ignore
 from utils.snake import Snake
 from utils.SnakeDomain import SnakeDomain
@@ -58,5 +59,5 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 loop = asyncio.get_event_loop()
 SERVER = os.environ.get("SERVER", "localhost")
 PORT = os.environ.get("PORT", "8000")
-NAME = os.environ.get("NAME", getpass.getuser())
+NAME = os.environ.get("NAME", getpass.getuser() + str(time.time()))
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
