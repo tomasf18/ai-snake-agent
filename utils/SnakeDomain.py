@@ -91,6 +91,13 @@ class SnakeDomain(SearchDomain):
             if sight.get(str(new_position[0]), {}).get(str(new_position[1]), 0) == consts.Tiles.SNAKE:
                 continue
 
+            # # If new_position is adjacent to snake, better be safe
+            for dir_1 in DIRECTION:
+                pos = dir_1 + new_position
+                print("New position = ", pos)
+                if sight.get(str(pos[0]), {}).get(str(pos[1]), 0) == consts.Tiles.SNAKE:
+                    continue
+
             if (
                 snake_traverse
                 or self.board[new_position[0]][new_position[1]] != consts.Tiles.STONE
@@ -164,7 +171,7 @@ class SnakeDomain(SearchDomain):
                     dist = self.calculateDistance(snake_head, (int(row), int(col)), snake_traverse)
                     if dist < min_dist:
                         min_dist = dist
-        heuristic += 4 / (1 + min_dist) 
+        heuristic += 3 / (1 + min_dist) 
 
         if objectives:
             heuristic += self.calculateDistance(
@@ -395,7 +402,7 @@ class SnakeDomain(SearchDomain):
             logging.error(f"\tNo solution found, goal: {goal}, state: {state}")
             if self.following_plan_to_food and not state["snake_traverse"]:
                 food = tuple(objectives[0])
-                self.forgotten_foods.add((food, state["food_type"]))
+                self.forgotten_foods.add((food, state.get("food_type", "normal")))
                 self.foods_in_map.discard(food)
                 self.super_foods_in_map.discard(food)
 
