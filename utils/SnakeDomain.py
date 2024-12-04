@@ -269,12 +269,15 @@ class SnakeDomain(SearchDomain):
             logging.info("\tReached objective!")
             # If following plan to food, update the map_positions_copy
             if self.following_plan_to_food:
+                if normal_food:
+                    self.counter += 1
+                
                 self.foods_in_map.discard(tuple(head))
                 self.super_foods_in_map.discard(tuple(head))
 
-                self.updateMapCopy(state["snake_sight"], refresh=True)
+                self.updateMapCopy(state["snake_sight"])
                 self.following_plan_to_food = False
-                self.counter += 1
+
 
             # Remove the goal from the list of objectives
             # self.multi_objectives.remove_next_goal()
