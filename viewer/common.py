@@ -37,7 +37,6 @@ class Snake:
     score: int
     name: str
     traverse: bool
-    step: int
 
 
 @dataclass
