@@ -26,8 +26,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
                 if (datetime.datetime.now().timestamp() - ts) > domain.time_per_frame:
+                    print("Received a message that is too old")
+                    domain.multi_objectives.clear_goals()
+                    domain.plan = []
                     continue
-                 # TODO: É preciso ignorar plan atual
+                
 
                 
                 snake.update(data)
@@ -44,6 +47,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 return
             
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 print(f"EXCEPTION... superfoods eaten = {domain.superfood_eaten}, food eaten = {domain.food_eaten}")
                 input()
 

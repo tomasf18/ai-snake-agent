@@ -1,4 +1,5 @@
 from collections import deque
+from utils import snake
 from utils.multi_objective_search import MultiObjectiveSearch
 from utils.tree_search import *
 from utils.Directions import DIRECTION
@@ -149,12 +150,9 @@ class SnakeDomain(SearchDomain):
         # logging.info("Heuristic method")
         snake_head = new_state["snake_body"][0]
         snake_traverse = new_state["snake_traverse"]
+        snake_sight = new_state["snake_sight"]
         objectives = new_state["objectives"]
         heuristic = 0
-
-        # penalty for positions visited recently
-        if tuple(snake_head) in self.recent_explored_positions:
-            heuristic += 2
 
         if objectives:
             heuristic += self.calculateDistance(
@@ -198,6 +196,7 @@ class SnakeDomain(SearchDomain):
 
         logging.info("GetNextMove: Started computing...")
         ti: float = time.time()
+        global EATING_SUPERFOOD
 
         state = {
             "snake_body": snake.snake,
@@ -207,6 +206,18 @@ class SnakeDomain(SearchDomain):
             "timestamp": datetime.datetime.fromisoformat(snake.timestamp).timestamp(),
             "grow": 0,
         }
+        
+        snake_range = snake.snake_range
+        step = snake.step
+        
+        if state["snake_traverse"] and snake_range >= 5:
+            print("RANGE AND TRAVERSE -> MODE: NOT EATING SUPERFOOD")
+            EATING_SUPERFOOD = False
+        
+        if step >= 2700:
+            print("STEP 2700 -> MODE: EATING SUPERFOOD")
+            EATING_SUPERFOOD = True
+        
 
         # 1. Update the map removing the snake sight
         self.updateMapCopy(state["snake_sight"])
@@ -410,7 +421,7 @@ class SnakeDomain(SearchDomain):
 
         selected_position = max(
             self.map_positions_copy,
-            key=lambda pos: self.calculate_region_density(pos, 3) / (self.map_positions[pos] + 1),
+            key=lambda pos: self.calculate_region_density(pos, 1) / (self.map_positions[pos] + 1),
         )
 
         self.map_positions_copy.discard(selected_position)
