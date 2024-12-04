@@ -57,7 +57,7 @@ class GameStateSprite(pygame.sprite.Sprite):
         traverse = "[T]" if self.player.traverse else ""
         self.image.blit(
             self.font.render(
-                f"{self.player.name} {traverse}: {self.player.score} [Step = {self.player.step}]",
+                f"{self.player.name} {traverse}: {self.player.score}",
                 True,
                 "purple",
                 "white",
