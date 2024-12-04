@@ -1,7 +1,4 @@
 from collections import deque
-from hmac import new
-import math
-import pprint
 from utils.multi_objective_search import MultiObjectiveSearch
 from utils.tree_search import *
 from utils.Directions import DIRECTION
@@ -11,7 +8,6 @@ import time
 import datetime
 import consts
 import random
-import numpy as np
 
 import logging
 
@@ -29,8 +25,6 @@ class SnakeDomain(SearchDomain):
         self.time_per_frame: float = 1 / int(map["fps"])
         self.board: list[list[int]] = map["map"]
         self.board_copy: list[list[int]] = map["map"]
-        print("Board\n")
-        pprint.pprint(np.transpose(self.board).tolist())
         
         # (x, y): count
         self.map_positions: dict = {}
@@ -125,7 +119,7 @@ class SnakeDomain(SearchDomain):
 
         newstate = {
             "snake_body": new_snake_body,
-            "snake_traverse": state["snake_traverse"],
+            "snake_traverse": False if state.get("food_type", "") == "super" else state["snake_traverse"],
             "snake_sight": state["snake_sight"],
             "objectives": (
                 []
@@ -251,16 +245,8 @@ class SnakeDomain(SearchDomain):
 
             for point in self.create_list_objectives(state, closest_food):
                 self.multi_objectives.add_goal(point)
-
-            # if not normal_food:
-            #     # If following for superfood, must have an extra step
-            #     # in case its a traverse superfood
-            #     self.multi_objectives.add_goal(
-            #         ## TODO para escolher ponto
-            #         self.create_list_objectives(
-            #             state, self.multi_objectives.get_list_of_objectives()[-1]
-            #         )[-1]
-            #     )
+                
+            state["food_type"] = "normal" if normal_food else "super"
 
             logging.info(f"\tFood Position: {closest_food}")
             self.following_plan_to_food = True
@@ -273,6 +259,9 @@ class SnakeDomain(SearchDomain):
             for point in self.create_list_objectives(state, goal):
                 self.multi_objectives.add_goal(point)
 
+            logging.info(f"\tGoal : {goal}")
+            logging.info(f"\tAt goal there is: {self.board[goal[0]][goal[1]]}")
+            logging.info(f"\tCreating a new path to goal: {self.multi_objectives.get_list_of_objectives()}")
             self.create_problem(state)
 
         # if the snake has reached the goal
@@ -359,14 +348,13 @@ class SnakeDomain(SearchDomain):
             self.multi_objectives.clear_goals()  # No move found, so assume its not possible and reset objectives
             self.following_plan_to_food = False
             valid_moves = self.actions(state)
-            logging.info(f"\tValid moves: {valid_moves}")
 
             if self.plan: # If  still has a backup plan
                 logging.info(f"\tChose backup plan {self.plan}")
                 return
             elif valid_moves:
                 move = random.choice(valid_moves)
-                logging.info(f"\tChose valid move: {move}")
+                logging.info(f"\tChose valid move: {move} from {valid_moves}")
                 self.plan = [move]
             else:
                 raise Exception("No valid moves")
@@ -409,6 +397,7 @@ class SnakeDomain(SearchDomain):
             key=lambda pos: self.calculate_region_density(pos, 3) / (self.map_positions[pos] + 1),
         )
 
+        self.map_positions_copy.discard(selected_position)
         return selected_position
     
     def calculate_region_density(self, position, radius):
