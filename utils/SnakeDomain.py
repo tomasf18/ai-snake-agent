@@ -118,7 +118,11 @@ class SnakeDomain(SearchDomain):
 
         # if the new head is in a food position, we add a new body part to the snake
         if (new_head[0], new_head[1]) in self.foods_in_map:
+            state["grow"] += 2 if state.get("food_type", "") == "super" else 1
+
+        if 0 < state["grow"]:
             new_snake_body.append(snake_body[-1])
+            state["grow"] -= 1
 
         newstate = {
             "snake_body": new_snake_body,
@@ -133,6 +137,7 @@ class SnakeDomain(SearchDomain):
                     else state["objectives"][1:]
                 )
             ),
+            "grow": state["grow"],
         }
         # logging.info(f"\tNew state in result function: {newstate}")
         return newstate
@@ -200,10 +205,13 @@ class SnakeDomain(SearchDomain):
             "snake_sight": snake.snake_sight,
             "objectives": self.multi_objectives.get_list_of_objectives(),
             "timestamp": datetime.datetime.fromisoformat(snake.timestamp).timestamp(),
+            "grow": 0,
         }
 
         # 1. Update the map removing the snake sight
         self.updateMapCopy(state["snake_sight"])
+
+
 
         # 2. Add new known foods
         foods_in_sight, super_foods_in_sight = snake.check_food_in_sight()
@@ -230,7 +238,6 @@ class SnakeDomain(SearchDomain):
         # logging.info(f"\tFoods in map: {self.foods_in_map}")
         # logging.info(f"\tBoard copy: {self.board_copy}")
 
-
         # If there are foods in the map
         exists_food_in_map = (
             (normal_food := len(self.foods_in_map) > 0)
@@ -254,6 +261,7 @@ class SnakeDomain(SearchDomain):
             logging.info(f"\tFood Position: {closest_food}")
             self.following_plan_to_food = True
             self.create_problem(state)
+        
 
         # If there are no objectives (Normally first move)
         elif self.multi_objectives.is_empty():
@@ -265,6 +273,10 @@ class SnakeDomain(SearchDomain):
             logging.info(f"\tGoal : {goal}")
             logging.info(f"\tAt goal there is: {self.board[goal[0]][goal[1]]}")
             logging.info(f"\tCreating a new path to goal: {self.multi_objectives.get_list_of_objectives()}")
+            self.create_problem(state)
+
+        elif self.snake_in_sight(state["snake_sight"]):
+            logging.info("\tSnake in sight, clearing objectives")
             self.create_problem(state)
 
         # if the snake has reached the goal
@@ -435,3 +447,11 @@ class SnakeDomain(SearchDomain):
                     self.map_positions_copy.discard(pos)
                     if pos not in self.recent_explored_positions:
                         self.recent_explored_positions.append(pos)
+    
+
+    def snake_in_sight(self, sight):
+        for row, cols in sight.items():
+            for col, value in cols.items():
+                if value == consts.Tiles.SNAKE:
+                    return True
+        return False
