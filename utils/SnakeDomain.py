@@ -39,6 +39,9 @@ class SnakeDomain(SearchDomain):
         self.multi_objectives = MultiObjectiveSearch([])
         self.counter = 0
 
+        self.superfood_eaten = 0
+        self.food_eaten = 0
+
         # Debugging
         self.maxDist = 0
         
@@ -271,20 +274,15 @@ class SnakeDomain(SearchDomain):
             if self.following_plan_to_food:
                 if normal_food:
                     self.counter += 1
+                    self.food_eaten +=1
+                else:
+                    self.superfood_eaten += 1
                 
                 self.foods_in_map.discard(tuple(head))
                 self.super_foods_in_map.discard(tuple(head))
 
                 self.updateMapCopy(state["snake_sight"])
                 self.following_plan_to_food = False
-
-
-            # Remove the goal from the list of objectives
-            # self.multi_objectives.remove_next_goal()
-            # # Create a new objective
-            # goal_list = self.multi_objectives.get_list_of_objectives()
-            # new_goal = self.create_list_objectives(state, goal_list[0])[-1]
-            # self.multi_objectives.add_goal(new_goal)
 
             self.multi_objectives.clear_goals()
             goal = self.find_goal(state)
@@ -353,15 +351,18 @@ class SnakeDomain(SearchDomain):
             valid_moves = self.actions(state)
 
             if self.plan: # If  still has a backup plan
+                print("Following backup plan")
                 logging.info(f"\tChose backup plan {self.plan}")
                 return
             elif valid_moves:
                 move = random.choice(valid_moves)
                 logging.info(f"\tChose valid move: {move} from {valid_moves}")
+                print(f"Panic move! {move}")
                 self.plan = [move]
             else:
-                raise Exception("No valid moves")
+                raise Exception(f"No valid moves, superfoods eaten = {self.superfood_eaten}, food eaten = {self.food_eaten}")
         else:
+            print("Following calculated plan")
             self.plan = tree.plan()
             self.state_plan = tree.path()
             self.__backup_of_plan = self.plan.copy()
@@ -419,6 +420,7 @@ class SnakeDomain(SearchDomain):
     
     def updateMapCopy(self, sight, refresh = False):
         if refresh or self.counter >= 2:
+            print("\nRefreshed Map")
             self.map_positions_copy = set(self.map_positions.keys())
             for pos in self.recent_explored_positions:
                 self.map_positions_copy.discard(pos)
@@ -427,6 +429,7 @@ class SnakeDomain(SearchDomain):
         for row, cols in sight.items():
             for col, value in cols.items():
                 pos = (int(row), int(col))
+
                 if pos in self.map_positions_copy:
                     self.map_positions[pos] += 1
                     self.map_positions_copy.discard(pos)

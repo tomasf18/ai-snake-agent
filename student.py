@@ -42,6 +42,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
+            
+            except Exception as e:
+                print(f"EXCEPTION... superfoods eaten = {domain.superfood_eaten}, food eaten = {domain.food_eaten}")
+                input()
 
 
 # DO NOT CHANGE THE LINES BELLOW
