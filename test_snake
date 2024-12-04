@@ -34,12 +34,24 @@ for ((i=1; i<=num_times; i++)); do
 
     # Extrai o último score do log do server, buscando o padrão "SCORE <username>: <score>"
     score=$(grep -oP '\bSCORE\b.*:\s*\K\d+' server_log.txt | tail -1)
+    
+    # Extrai o último step do log do server, buscando o padrão "[<step>] SCORE"
+    step=$(grep -oP '\[\d+\]\s+SCORE' server_log.txt | tail -1 | grep -oP '\d+')
 
     # Se o score não for encontrado, assume 0 como default
     if [ -z "$score" ]; then
         echo "No score found for test $i, assuming score 0."
         score=0
     fi
+
+    # Se o step não for encontrado, assume 0 como default
+    if [ -z "$step" ]; then
+        echo "No step found for test $i, assuming step 0."
+        step=0
+    fi
+
+    # Imprime o step da execução atual
+    echo "Step for test $i: $step"
 
     # Imprime o score da execução atual
     echo "Score for test $i: $score"
