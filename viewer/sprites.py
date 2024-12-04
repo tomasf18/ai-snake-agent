@@ -4,6 +4,39 @@ from collections import deque
 from .spritesheet import SpriteSheet, CELL_SIZE
 from .common import Directions, Snake, Food, Stone, Sight, ScoreBoard, get_direction
 
+from dataclasses import dataclass
+
+@dataclass
+class Info:
+    text: str
+
+class GameInfoSprite(pygame.sprite.Sprite):
+    def __init__(self, info: Info, column: int, line: int, WIDTH, SCALE):
+        self.font = pygame.font.Font(None, int(SCALE))
+        super().__init__()
+
+        self.info = info
+        self.line = line
+        self.column = column
+        self.image = pygame.Surface([WIDTH * SCALE, (self.line + 1) * SCALE])
+        print(self.image.get_size())
+        self.image.set_colorkey("white")
+        self.rect = self.image.get_rect()
+        self.SCALE = SCALE
+
+    def update(self):
+        self.image.fill("white")
+        self.image.set_colorkey("white")
+
+        self.image.blit(
+            self.font.render(
+                self.info.text,
+                True,
+                "purple",
+                "white",
+            ),
+            (self.column * self.SCALE, self.line * self.SCALE),
+        )
 
 class GameStateSprite(pygame.sprite.Sprite):
     def __init__(self, player: Snake, pos: int, WIDTH, HEIGHT, SCALE):
