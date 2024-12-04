@@ -9,12 +9,11 @@ import time
 import datetime
 import consts
 import random
-
 import logging
 
 logging.basicConfig(
     filename="project.log",
-    filemode="w",
+    filemode="a",
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.DEBUG,
 )
@@ -158,6 +157,15 @@ class SnakeDomain(SearchDomain):
         objectives = new_state["objectives"]
         heuristic = 0
 
+        min_dist = 100
+        for row, cols in new_state["snake_sight"].items():
+            for col, value in cols.items():
+                if value == consts.Tiles.SNAKE:
+                    dist = self.calculateDistance(snake_head, (int(row), int(col)), snake_traverse)
+                    if dist < min_dist:
+                        min_dist = dist
+        heuristic += 4 / (1 + min_dist) 
+
         if objectives:
             heuristic += self.calculateDistance(
                 snake_head, objectives[0], snake_traverse
@@ -231,7 +239,7 @@ class SnakeDomain(SearchDomain):
         foods_in_sight, super_foods_in_sight = snake.check_food_in_sight()
 
         for food in foods_in_sight:
-            if list(food) not in self.multi_objectives.objectives:
+            if list(food) not in self.multi_objectives.objectives or all([list(food) != forgotten[0] for forgotten in self.forgotten_foods]):
                 self.foods_in_map.add(food)
 
         for super_food in super_foods_in_sight:
@@ -445,6 +453,8 @@ class SnakeDomain(SearchDomain):
             self.map_positions_copy,
             key=lambda pos: self.calculate_region_density(pos, 1) / (self.map_positions[pos] + 1),
         )
+
+        # print(f"Selected {selected_position} to visitr")
 
         self.map_positions_copy.discard(selected_position)
         return selected_position
