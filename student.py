@@ -27,7 +27,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
                 if (datetime.datetime.now().timestamp() - ts) > domain.time_per_frame:
-                    print("Received a message that is too old")
+                    # print("Received a message that is too old")
                     domain.multi_objectives.clear_goals()
                     domain.plan = []
                     continue
@@ -59,5 +59,5 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 loop = asyncio.get_event_loop()
 SERVER = os.environ.get("SERVER", "localhost")
 PORT = os.environ.get("PORT", "8000")
-NAME = os.environ.get("NAME", getpass.getuser() + str(time.time()))
+NAME = os.environ.get("NAME", getpass.getuser())
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
