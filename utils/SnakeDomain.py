@@ -11,6 +11,7 @@ import time
 import datetime
 import consts
 import random
+import numpy as np
 
 import logging
 
@@ -28,6 +29,8 @@ class SnakeDomain(SearchDomain):
         self.time_per_frame: float = 1 / int(map["fps"])
         self.board: list[list[int]] = map["map"]
         self.board_copy: list[list[int]] = map["map"]
+        print("Board\n")
+        pprint.pprint(np.transpose(self.board).tolist())
         
         # (x, y): count
         self.map_positions: dict = {}
@@ -218,7 +221,7 @@ class SnakeDomain(SearchDomain):
 
         head = state["snake_body"][0]
         
-        logging.info(f"\nfoods_in_map: {self.foods_in_map}")
+        logging.info(f"foods_in_map: {self.foods_in_map}")
         logging.info(f"super_foods_in_map: {self.super_foods_in_map}\n")
 
         # logging.info(f"\tSnake head: {head}")
@@ -230,39 +233,36 @@ class SnakeDomain(SearchDomain):
         # logging.info(f"\tFoods in map: {self.foods_in_map}")
         # logging.info(f"\tBoard copy: {self.board_copy}")
 
+
         # If there are foods in the map
-        if (
+        exists_food_in_map = (
             (normal_food := len(self.foods_in_map) > 0)
             or (EATING_SUPERFOOD and len(self.super_foods_in_map) > 0)
-        ) and not self.following_plan_to_food:
-            ## Meter para ignorar superfood de alguma maneira
-            # first objective (food)
-            goal = list(
-                min(
-                    self.foods_in_map if normal_food else self.super_foods_in_map,
-                    key=lambda pos: self.calculateDistance(
-                        head, pos, snake_traverse=state["snake_traverse"]
-                    ),
-                )
-            )
+        )
 
+        closest_food = self.get_closest_food(state=state, normal_food=normal_food) if exists_food_in_map else None
+        if exists_food_in_map and (not self.following_plan_to_food or 
+            self.calculateDistance(head, closest_food, snake.snake_traverse) < 
+            self.calculateDistance(head, self.multi_objectives.get_next_goal(), snake.snake_traverse)
+        ):
             # clear the list of objectives
             self.multi_objectives.clear_goals()
             logging.info("\tCreating list objectives to food")
 
-            for point in self.create_list_objectives(state, goal):
+            for point in self.create_list_objectives(state, closest_food):
                 self.multi_objectives.add_goal(point)
 
-            if not normal_food:
-                # If following for superfood, must have an extra step
-                # in case its a traverse superfood
-                self.multi_objectives.add_goal(
-                    self.create_list_objectives(
-                        state, self.multi_objectives.get_list_of_objectives()[-1]
-                    )[-1]
-                )
+            # if not normal_food:
+            #     # If following for superfood, must have an extra step
+            #     # in case its a traverse superfood
+            #     self.multi_objectives.add_goal(
+            #         ## TODO para escolher ponto
+            #         self.create_list_objectives(
+            #             state, self.multi_objectives.get_list_of_objectives()[-1]
+            #         )[-1]
+            #     )
 
-            logging.info(f"\tFood Position: {goal}")
+            logging.info(f"\tFood Position: {closest_food}")
             self.following_plan_to_food = True
             self.create_problem(state)
 
@@ -360,6 +360,7 @@ class SnakeDomain(SearchDomain):
             self.following_plan_to_food = False
             valid_moves = self.actions(state)
             logging.info(f"\tValid moves: {valid_moves}")
+
             if self.plan: # If  still has a backup plan
                 logging.info(f"\tChose backup plan {self.plan}")
                 return
@@ -375,6 +376,17 @@ class SnakeDomain(SearchDomain):
             self.__backup_of_plan = self.plan.copy()
         logging.info(f"\tPlan: {self.plan}")
 
+
+    def get_closest_food(self, normal_food, state) -> list[int]:
+        head = state["snake_body"][0]
+        return list(
+            min(
+                self.foods_in_map if normal_food else self.super_foods_in_map,
+                key=lambda pos: self.calculateDistance(
+                    head, pos, snake_traverse=state["snake_traverse"]
+                ),
+            )
+        )
 
     def create_list_objectives(self, state, goal):
         """Get list of objectives to goal (currently going to the tail of the snake)"""
