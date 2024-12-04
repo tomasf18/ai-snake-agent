@@ -415,7 +415,7 @@ class SnakeDomain(SearchDomain):
         return density / valid_neighbors
     
     def updateMapCopy(self, sight, refresh = False):
-        if refresh and self.counter == 2:
+        if refresh or self.counter >= 2:
             self.map_positions_copy = set(self.map_positions.keys())
             for pos in self.recent_explored_positions:
                 self.map_positions_copy.discard(pos)
