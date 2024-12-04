@@ -212,11 +212,9 @@ class SnakeDomain(SearchDomain):
         step = snake.step
         
         if state["snake_traverse"] and snake_range >= 5:
-            print("RANGE AND TRAVERSE -> MODE: NOT EATING SUPERFOOD")
             EATING_SUPERFOOD = False
         
-        if step >= 2700:
-            print("STEP 2700 -> MODE: EATING SUPERFOOD")
+        if step >= 2600:
             EATING_SUPERFOOD = True
         
 
