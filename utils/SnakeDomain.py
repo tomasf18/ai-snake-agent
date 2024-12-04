@@ -117,13 +117,14 @@ class SnakeDomain(SearchDomain):
         for i in range(len(snake_body) - 1):
             new_snake_body.append(snake_body[i])
 
+        grow = state["grow"]
         # if the new head is in a food position, we add a new body part to the snake
         if (new_head[0], new_head[1]) in self.foods_in_map:
-            state["grow"] += 2 if state.get("food_type", "") == "super" else 1
+            grow += 2 if state.get("food_type", "") == "super" else 1
 
-        if 0 < state["grow"]:
+        if 0 < grow:
             new_snake_body.append(snake_body[-1])
-            state["grow"] -= 1
+            grow -= 1
 
         newstate = {
             "snake_body": new_snake_body,
@@ -138,7 +139,7 @@ class SnakeDomain(SearchDomain):
                     else state["objectives"][1:]
                 )
             ),
-            "grow": state["grow"],
+            "grow": grow,
         }
         # logging.info(f"\tNew state in result function: {newstate}")
         return newstate
