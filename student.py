@@ -50,7 +50,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 import traceback
                 traceback.print_exc()
                 print(f"EXCEPTION... superfoods eaten = {domain.superfood_eaten}, food eaten = {domain.food_eaten}")
-                input()
 
 
 # DO NOT CHANGE THE LINES BELLOW

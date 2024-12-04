@@ -286,7 +286,7 @@ class SnakeDomain(SearchDomain):
             logging.info(f"\tCreating a new path to goal: {self.multi_objectives.get_list_of_objectives()}")
             self.create_problem(state)
 
-        elif self.snake_in_sight(state["snake_sight"]):
+        elif self.snake_in_sight(state["snake_sight"], state["snake_body"]):
             logging.info("\tSnake in sight, clearing objectives")
             self.create_problem(state)
 
@@ -460,9 +460,9 @@ class SnakeDomain(SearchDomain):
                         self.recent_explored_positions.append(pos)
     
 
-    def snake_in_sight(self, sight):
+    def snake_in_sight(self, sight, snake_body):
         for row, cols in sight.items():
             for col, value in cols.items():
-                if value == consts.Tiles.SNAKE:
+                if value == consts.Tiles.SNAKE and [int(row), int(col)] not in snake_body:
                     return True
         return False
