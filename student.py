@@ -27,7 +27,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
                 if (datetime.datetime.now().timestamp() - ts) > domain.time_per_frame:
-                    print("Received a message that is too old")
+                    # print("Received a message that is too old")
                     domain.multi_objectives.clear_goals()
                     domain.plan = []
                     continue

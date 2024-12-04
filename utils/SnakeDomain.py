@@ -222,11 +222,11 @@ class SnakeDomain(SearchDomain):
         step = snake.step
         
         if state["snake_traverse"] and snake_range >= 5:
-            print("RANGE AND TRAVERSE -> MODE: NOT EATING SUPERFOOD")
+            # print("RANGE AND TRAVERSE -> MODE: NOT EATING SUPERFOOD")
             EATING_SUPERFOOD = False
         
-        if step >= 2700:
-            print("STEP 2700 -> MODE: EATING SUPERFOOD")
+        if step >= 2600:
+            # print("STEP 2600 -> MODE: EATING SUPERFOOD")
             EATING_SUPERFOOD = True
         
 
@@ -410,7 +410,7 @@ class SnakeDomain(SearchDomain):
             elif valid_moves:
                 move = random.choice(valid_moves)
                 logging.info(f"\tChose valid move: {move} from {valid_moves}")
-                print(f"Panic move! {move}")
+                # print(f"Panic move! {move}")
                 self.plan = [move]
             else:
                 raise Exception(f"No valid moves, superfoods eaten = {self.superfood_eaten}, food eaten = {self.food_eaten}")
@@ -475,7 +475,7 @@ class SnakeDomain(SearchDomain):
     
     def updateMapCopy(self, sight, refresh = False):
         if refresh or self.counter >= 2:
-            print("\nRefreshed Map")
+            # print("\nRefreshed Map")
             self.map_positions_copy = set(self.map_positions.keys())
             for pos in self.recent_explored_positions:
                 self.map_positions_copy.discard(pos)
