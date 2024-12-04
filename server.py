@@ -67,6 +67,8 @@ class GameServer:
 
         logger.debug("Save highscores")
         for player in self.game_player.values():
+            if player not in self.game.snakes:
+                continue
             logger.info(
                 "Saving: %s <%s>",
                 player,
