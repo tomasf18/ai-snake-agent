@@ -9,12 +9,11 @@ import time
 import datetime
 import consts
 import random
-
 import logging
 
 logging.basicConfig(
     filename="project.log",
-    filemode="w",
+    filemode="a",
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.DEBUG,
 )
@@ -158,6 +157,15 @@ class SnakeDomain(SearchDomain):
         objectives = new_state["objectives"]
         heuristic = 0
 
+        min_dist = 100
+        for row, cols in new_state["snake_sight"].items():
+            for col, value in cols.items():
+                if value == consts.Tiles.SNAKE:
+                    dist = self.calculateDistance(snake_head, (int(row), int(col)), snake_traverse)
+                    if dist < min_dist:
+                        min_dist = dist
+        heuristic += 4 / (1 + min_dist) 
+
         if objectives:
             heuristic += self.calculateDistance(
                 snake_head, objectives[0], snake_traverse
@@ -231,7 +239,7 @@ class SnakeDomain(SearchDomain):
         foods_in_sight, super_foods_in_sight = snake.check_food_in_sight()
 
         for food in foods_in_sight:
-            if list(food) not in self.multi_objectives.objectives:
+            if list(food) not in self.multi_objectives.objectives or all([list(food) != forgotten[0] for forgotten in self.forgotten_foods]):
                 self.foods_in_map.add(food)
 
         for super_food in super_foods_in_sight:
@@ -386,17 +394,17 @@ class SnakeDomain(SearchDomain):
         if result is None:
             logging.error(f"\tNo solution found, goal: {goal}, state: {state}")
             if self.following_plan_to_food and not state["snake_traverse"]:
-                goal = objectives[-1]
-                self.forgotten_foods.add((goal, state["food_type"]))
-                self.foods_in_map.discard(goal)
-                self.super_foods_in_map.discard(goal)
+                food = tuple(objectives[0])
+                self.forgotten_foods.add((food, state["food_type"]))
+                self.foods_in_map.discard(food)
+                self.super_foods_in_map.discard(food)
 
             self.multi_objectives.clear_goals()  # No move found, so assume its not possible and reset objectives
             self.following_plan_to_food = False
             valid_moves = self.actions(state)
 
             if self.plan: # If  still has a backup plan
-                print("Following backup plan")
+                # print("Following backup plan")
                 logging.info(f"\tChose backup plan {self.plan}")
                 return
             elif valid_moves:
@@ -407,7 +415,7 @@ class SnakeDomain(SearchDomain):
             else:
                 raise Exception(f"No valid moves, superfoods eaten = {self.superfood_eaten}, food eaten = {self.food_eaten}")
         else:
-            print("Following calculated plan")
+            # print("Following calculated plan")
             self.plan = tree.plan()
             self.state_plan = tree.path()
             self.__backup_of_plan = self.plan.copy()
@@ -445,6 +453,8 @@ class SnakeDomain(SearchDomain):
             self.map_positions_copy,
             key=lambda pos: self.calculate_region_density(pos, 1) / (self.map_positions[pos] + 1),
         )
+
+        # print(f"Selected {selected_position} to visitr")
 
         self.map_positions_copy.discard(selected_position)
         return selected_position

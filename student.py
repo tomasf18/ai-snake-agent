@@ -32,7 +32,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     domain.plan = []
                     continue
                 
-
                 
                 snake.update(data)
             
@@ -51,6 +50,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 import traceback
                 traceback.print_exc()
                 print(f"EXCEPTION... superfoods eaten = {domain.superfood_eaten}, food eaten = {domain.food_eaten}")
+                return
 
 
 # DO NOT CHANGE THE LINES BELLOW
@@ -59,5 +59,5 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 loop = asyncio.get_event_loop()
 SERVER = os.environ.get("SERVER", "localhost")
 PORT = os.environ.get("PORT", "8000")
-NAME = os.environ.get("NAME", getpass.getuser() + str(time.time()))
+NAME = os.environ.get("NAME", getpass.getuser())
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
