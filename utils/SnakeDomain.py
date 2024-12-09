@@ -127,13 +127,14 @@ class SnakeDomain(SearchDomain):
             new_snake_body.append(snake_body[i])
 
         grow = state["grow"]
-        # if the new head is in a food position, we add a new body part to the snake
-        if (new_head[0], new_head[1]) in self.foods_in_map:
-            grow += 2 if state.get("food_type", "") == "super" else 1
-
         if 0 < grow:
             new_snake_body.append(snake_body[-1])
             grow -= 1
+
+        # if the new head is in a food position, we add a new body part to the snake
+        if (new_head[0], new_head[1]) in self.foods_in_map | self.super_foods_in_map:
+            grow += 2 if state.get("food_type", "") == "super" else 1
+
 
         newstate = {
             "snake_body": new_snake_body,
@@ -257,13 +258,13 @@ class SnakeDomain(SearchDomain):
         logging.info(f"foods_in_map: {self.foods_in_map}")
         logging.info(f"super_foods_in_map: {self.super_foods_in_map}\n")
 
-        # logging.info(f"\tSnake head: {head}")
-        # if not self.multi_objectives.is_empty():
-        #     logging.info(f"\tNext goal: {self.multi_objectives.get_next_goal()}")
-        # logging.info(f"\tObjectives: {self.multi_objectives.get_list_of_objectives()}")
-        # logging.info(f"\tPlan: {self.plan}")
-        # logging.info(f"\tFollowing plan to food: {self.following_plan_to_food}")
-        # logging.info(f"\tFoods in map: {self.foods_in_map}")
+        logging.info(f"\tSnake head: {head}")
+        if not self.multi_objectives.is_empty():
+            logging.info(f"\tNext goal: {self.multi_objectives.get_next_goal()}")
+        logging.info(f"\tObjectives: {self.multi_objectives.get_list_of_objectives()}")
+        logging.info(f"\tPlan: {self.plan}")
+        logging.info(f"\tFollowing plan to food: {self.following_plan_to_food}")
+        logging.info(f"\tFoods in map: {self.foods_in_map}")
         # logging.info(f"\tBoard copy: {self.board_copy}")
 
         # If there are foods in the map
@@ -299,7 +300,7 @@ class SnakeDomain(SearchDomain):
                 
             state["food_type"] = "normal" if normal_food else "super"
 
-            logging.info(f"\tFood Position: {closest_food}")
+            logging.info(f"\t{'Super' if not normal_food else ''} Food Position: {closest_food}")
             self.following_plan_to_food = True
             self.create_problem(state)
         
@@ -346,7 +347,7 @@ class SnakeDomain(SearchDomain):
             self.create_problem(state)
 
         move = self.plan.pop(0)
-        # move_state = self.state_plan.pop(0)
+        move_state = self.state_plan.pop(0)
 
         # if move_state["snake_body"][0] != head:
         #     logging.error(f"head = {head}")
@@ -357,6 +358,8 @@ class SnakeDomain(SearchDomain):
         ## Panic move (In case a snake appears in front or traverse switch)
         if move not in (valid_moves := self.actions(state)):
             logging.error(f"PANIC MOVE! move = {move}, valid_moves = {valid_moves}, state = {state}")
+            logging.error(f"Excepted state = {move_state}")
+            logging.error(f"Real state = {state}")
             logging.error(f"complete plan = {self.__backup_of_plan}")
             logging.error(f"Self = {self.__dict__}")
             move = random.choice(valid_moves)
@@ -418,6 +421,7 @@ class SnakeDomain(SearchDomain):
                 logging.info(f"\tChose valid move: {move} from {valid_moves}")
                 # print(f"Panic move! {move}")
                 self.plan = [move]
+                self.state = [{}]
             else:
                 raise Exception(f"No valid moves, superfoods eaten = {self.superfood_eaten}, food eaten = {self.food_eaten}")
         else:
@@ -457,7 +461,7 @@ class SnakeDomain(SearchDomain):
 
         selected_position = max(
             self.map_positions_copy,
-            key=lambda pos: self.calculate_region_density(pos, 1) / (self.map_positions[pos] + 1),
+            key=lambda pos: self.calculate_region_density(pos, 1) / (self.map_positions[pos] + 1)**2,
         )
 
         # print(f"Selected {selected_position} to visitr")

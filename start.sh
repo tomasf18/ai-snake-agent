@@ -2,8 +2,14 @@
 
 TERMINAL="gnome-terminal"
 
+if [ -z "$1" ]; then
+    SEED=$RANDOM
+else
+    SEED=$1
+fi
+
 COMMAND="source venv/bin/activate && python3"
-APP=("server.py" "viewer.py" "student.py")
+APP=("server.py --seed $SEED" "viewer.py" "student.py")
 
 for i in {1..3}; do
     case $TERMINAL in
@@ -12,3 +18,5 @@ for i in {1..3}; do
             ;;
     esac
 done
+
+echo "Chosen seed was $SEED"
