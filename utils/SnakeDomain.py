@@ -275,19 +275,7 @@ class SnakeDomain(SearchDomain):
 
         closest_food = self.get_closest_food(state=state, normal_food=normal_food) if exists_food_in_map else None
 
-        if 0 < len(self.forgotten_foods) and state["snake_traverse"]:
-            food, food_type = self.forgotten_foods.pop()
-            logging.info(f"Following plan to forgotten food {food} of type {food_type}")
-
-            self.multi_objectives.clear_goals()
-            for point in self.create_list_objectives(state, food):
-                self.multi_objectives.add_goal(point)
-
-            state["food_type"] = food_type
-            self.following_plan_to_food = True
-            self.create_problem(state)
-
-        elif exists_food_in_map and (not self.following_plan_to_food or 
+        if exists_food_in_map and (not self.following_plan_to_food or 
             self.calculateDistance(head, closest_food, snake.snake_traverse) < 
             self.calculateDistance(head, self.multi_objectives.get_next_goal(), snake.snake_traverse)
         ):
@@ -303,8 +291,19 @@ class SnakeDomain(SearchDomain):
             logging.info(f"\t{'Super' if not normal_food else ''} Food Position: {closest_food}")
             self.following_plan_to_food = True
             self.create_problem(state)
-        
+            
+        elif 0 < len(self.forgotten_foods) and self.plan and not self.following_plan_to_food:
+            food, food_type = self.forgotten_foods.pop()
+            logging.info(f"Following plan to forgotten food {food} of type {food_type}")
 
+            self.multi_objectives.clear_goals()
+            for point in self.create_list_objectives(state, food):
+                self.multi_objectives.add_goal(point)
+
+            state["food_type"] = food_type
+            self.following_plan_to_food = True
+            self.create_problem(state)
+        
         # If there are no objectives (Normally first move)
         elif self.multi_objectives.is_empty():
             logging.info("\tMulti objectives was empty")
