@@ -328,8 +328,10 @@ class SnakeDomain(SearchDomain):
                 if normal_food:
                     self.counter += 1
                     self.food_eaten +=1
+                    state["grow"] = 1
                 else:
                     self.superfood_eaten += 1
+                    state["grow"] = 2
                 
                 self.foods_in_map.discard(tuple(head))
                 self.super_foods_in_map.discard(tuple(head))
@@ -401,7 +403,7 @@ class SnakeDomain(SearchDomain):
 
         if result is None:
             logging.error(f"\tNo solution found, goal: {goal}, state: {state}")
-            if self.following_plan_to_food and not state["snake_traverse"]:
+            if self.following_plan_to_food:
                 food = tuple(objectives[0])
                 self.forgotten_foods.add((food, state.get("food_type", "normal")))
                 self.foods_in_map.discard(food)
@@ -466,6 +468,15 @@ class SnakeDomain(SearchDomain):
         # print(f"Selected {selected_position} to visitr")
 
         self.map_positions_copy.discard(selected_position)
+        
+        while (selected_position in self.super_foods_in_map) and not EATING_SUPERFOOD:
+            selected_position = max(
+                self.map_positions_copy,
+                key=lambda pos: self.calculate_region_density(pos, 1) / (self.map_positions[pos] + 1)**2,
+            )
+            self.map_positions_copy.discard(selected_position)
+            
+        
         return selected_position
     
     def calculate_region_density(self, position, radius):
