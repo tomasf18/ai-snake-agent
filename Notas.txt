@@ -1,0 +1,1 @@
+Verificar se food está na posição anterior conhecida
