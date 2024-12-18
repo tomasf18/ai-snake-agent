@@ -410,6 +410,7 @@ class SnakeDomain(SearchDomain):
                 self.super_foods_in_map.discard(food)
 
             self.multi_objectives.clear_goals()  # No move found, so assume its not possible and reset objectives
+            # E se, ao falhar, fizessemos a pesquisa ao contrario? da food para o objectivo?
             self.following_plan_to_food = False
             valid_moves = self.actions(state)
 
@@ -422,7 +423,7 @@ class SnakeDomain(SearchDomain):
                 logging.info(f"\tChose valid move: {move} from {valid_moves}")
                 # print(f"Panic move! {move}")
                 self.plan = [move]
-                self.state = [{}]
+                self.state_plan = [{}]
             else:
                 raise Exception(f"No valid moves, superfoods eaten = {self.superfood_eaten}, food eaten = {self.food_eaten}")
         else:
