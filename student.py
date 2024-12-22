@@ -2,11 +2,13 @@ import asyncio
 import datetime
 import getpass
 import json
+import logging
 import os
 import time
 import websockets # type: ignore
 from utils.snake import Snake
 from utils.SnakeDomain import SnakeDomain
+
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     
@@ -18,16 +20,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         map_info = json.loads(await websocket.recv())
 
         snake: Snake = Snake()
-        domain: SnakeDomain = SnakeDomain(map = map_info)
+        domain: SnakeDomain = SnakeDomain(map=map_info, seed=int(SEED))
         await domain.startupMap()
 
         while True:
             try:
-                data = json.loads(await websocket.recv())  # receive game update, this must be called timely or your game will get out of sync with the server
+                data = json.loads(
+                    await websocket.recv()
+                )  # receive game update, this must be called timely or your game will get out of sync with the server
 
                 ts = datetime.datetime.fromisoformat(data["ts"]).timestamp()
                 if (datetime.datetime.now().timestamp() - ts) > domain.time_per_frame:
-                    # print("Received a message that is too old")
+                    logging.error("Received a message that is too old")
                     domain.multi_objectives.clear_goals()
                     domain.plan = []
                     continue
@@ -37,7 +41,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             
 
                 key = domain.get_next_move(snake=snake)
-                
+
+                if (datetime.datetime.now().timestamp() - ts) > domain.time_per_frame:
+                    logging.error("Took too long to send message!") 
+                    domain.multi_objectives.clear_goals()
+                    domain.plan = []
+                    continue
+
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
                 )  # send the key command to the server
@@ -49,9 +59,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                print(f"EXCEPTION... superfoods eaten = {domain.superfood_eaten}, food eaten = {domain.food_eaten}")
+                print(
+                    f"EXCEPTION... superfoods eaten = {domain.superfood_eaten}, food eaten = {domain.food_eaten}"
+                )
                 return
 
+
+SEED = os.environ.get("SEED", None)
 
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:

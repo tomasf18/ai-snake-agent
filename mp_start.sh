@@ -17,7 +17,7 @@ gnome-terminal -- bash -c "$COMMAND; python3 server.py --seed $SEED --players 2;
 gnome-terminal -- bash -c "$COMMAND; python3 viewer.py; exec bash"
 
 # Clients 
-gnome-terminal -- bash -c "$COMMAND; python3 student.py; exec bash"
-gnome-terminal -- bash -c "$COMMAND; NAME=jgaspar2 python3 student.py; exec bash"
+gnome-terminal -- bash -c "$COMMAND;SEED=$SEED python3 student.py; exec bash"
+gnome-terminal -- bash -c "$COMMAND;SEED=$SEED NAME=jgaspar2  python3 student.py; exec bash"
 
 echo "Chosen seed was $SEED"

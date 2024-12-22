@@ -8,15 +8,18 @@ else
     SEED=$1
 fi
 
-COMMAND="source venv/bin/activate && python3"
-APP=("server.py --seed $SEED" "viewer.py" "student.py")
+COMMAND="source venv/bin/activate"
 
-for i in {1..3}; do
-    case $TERMINAL in
-        gnome-terminal)
-            gnome-terminal -- bash -c "$COMMAND ${APP[$i-1]}; exec bash"
-            ;;
-    esac
-done
+# Server
+gnome-terminal -- bash -c "$COMMAND; python3 server.py --seed $SEED; exec bash"
+
+# Viewer
+gnome-terminal -- bash -c "$COMMAND; python3 viewer.py; exec bash"
+
+# Clients 
+gnome-terminal -- bash -c "$COMMAND;SEED=$SEED python3 student.py; exec bash"
 
 echo "Chosen seed was $SEED"
+
+
+echo test 27393

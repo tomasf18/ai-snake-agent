@@ -1,4 +1,5 @@
 from collections import deque
+import pprint
 from utils import snake
 from utils.multi_objective_search import MultiObjectiveSearch
 from utils.tree_search import *
@@ -20,7 +21,8 @@ logging.basicConfig(
 EATING_SUPERFOOD = True
 
 class SnakeDomain(SearchDomain):
-    def __init__(self, map: dict):
+    def __init__(self, map: dict, seed: int | None = None):
+        random.seed(seed)
         self.dim: tuple[int, int] = tuple(map["size"])
         self.time_per_frame: float = 1 / int(map["fps"])
         self.board: list[list[int]] = map["map"]
@@ -58,7 +60,9 @@ class SnakeDomain(SearchDomain):
                     self.map_positions_copy.add((x, y))
                 if self.board[x][y] == consts.Tiles.FOOD:
                     self.foods_in_map.add((x, y))
-        self.recent_explored_positions = deque(maxlen=len(self.map_positions) // 2) # 50% of the map
+        self.recent_explored_positions = deque(
+            maxlen=len(self.map_positions) // 2
+        )  # 50% of the map
 
     def actions(self, state) -> list[DIRECTION]:
         snake_body = state["snake_body"]
@@ -217,6 +221,7 @@ class SnakeDomain(SearchDomain):
             "objectives": self.multi_objectives.get_list_of_objectives(),
             "timestamp": datetime.datetime.fromisoformat(snake.timestamp).timestamp(),
             "grow": 0,
+            "ignore": [],
         }
 
         # Remove self from sight
@@ -305,11 +310,18 @@ class SnakeDomain(SearchDomain):
             self.create_problem(state)
         
         # If there are no objectives (Normally first move)
+        # Which means that its first move OR goal was cleared
+        # If goal was cleared last round, its because there is no path
+        # We can try to invert the search (starting at apple and going to head)
+        # fazer tipo pintar vetores
+        # começa a PASSAGE, se passa por cauda pinta SNAKE, se voltar a passar pinta PASSAGE
         elif self.multi_objectives.is_empty():
             logging.info("\tMulti objectives was empty")
             goal = self.find_goal(state)
             for point in self.create_list_objectives(state, goal):
                 self.multi_objectives.add_goal(point)
+
+            self.createIgnoreList(state)
 
             logging.info(f"\tGoal : {goal}")
             logging.info(f"\tAt goal there is: {self.board[goal[0]][goal[1]]}")
@@ -327,7 +339,7 @@ class SnakeDomain(SearchDomain):
             if self.following_plan_to_food:
                 if normal_food:
                     self.counter += 1
-                    self.food_eaten +=1
+                    self.food_eaten += 1
                     state["grow"] = 1
                 else:
                     self.superfood_eaten += 1
@@ -349,7 +361,8 @@ class SnakeDomain(SearchDomain):
 
         move = self.plan.pop(0)
         move_state = self.state_plan.pop(0)
-
+        logging.error(f"Expected state = {move_state}")
+        logging.error(f"Real state = {state}")
         # if move_state["snake_body"][0] != head:
         #     logging.error(f"head = {head}")
         #     logging.error(f"Wrong head position")
@@ -368,6 +381,11 @@ class SnakeDomain(SearchDomain):
             self.multi_objectives.clear_goals()
             self.plan = []
 
+        pp=move + head
+        logging.info("At new_pos there is: " + str(self.board[pp[0]%self.dim[0]][pp[1]%self.dim[1]]))
+
+        logging.info("Chosen final move" + str(move))
+        logging.info("Valid moves: " + str(valid_moves))
         # ======================== DEBUG ========================
         # print(f"\n\n{self.map_positions_copy}")
         tf: float = time.time()
@@ -519,3 +537,54 @@ class SnakeDomain(SearchDomain):
                 if value == consts.Tiles.SNAKE and [int(row), int(col)] not in snake_body:
                     return True
         return False
+
+    def createIgnoreList(self, state: dict):
+        """ This solution has problem in a W snake configuration, but ignore for now 🙏 """
+        def calculateIgnores(width: int, height: int, reverse: bool = False):
+            ignoreList: set = set()
+            for x in range(width):
+                ignore: set = set()
+                insideSnake: bool = False
+                lastWasSnake: bool = False
+                snakePasses: int = 0
+                for y in range(height):
+                    pos = (x, y) if not reverse else (y, x)
+                    if list(pos) in state["snake_body"]:
+                        if lastWasSnake:
+                            continue
+                        lastWasSnake = True
+                        insideSnake = not insideSnake
+                        snakePasses += 1
+                    else:
+                        lastWasSnake = False
+
+                    if insideSnake:
+                        ignore.add((x, y))
+
+                if snakePasses > 1:
+                    ignoreList.update(ignore)
+            return ignoreList
+
+        state["ignore"] = calculateIgnores(self.dim[0], self.dim[1]) | calculateIgnores(
+            self.dim[0], self.dim[1], reverse=True
+        )
+
+        logging.info("STATE IGNORE: " +  str(state["ignore"]))
+        copy = [row.copy() for row in self.board]
+
+        for x in range(self.dim[0]):
+            for y in range(self.dim[1]):
+                if copy[x][y] in [consts.Tiles.PASSAGE, consts.Tiles.FOOD]:
+                    copy[x][y] = "."
+                if (x, y) in state["ignore"]:
+                    copy[x][y] = "I"
+                    continue
+                if [x, y] in state["snake_body"]:
+                    copy[x][y] = "O"
+                    continue
+                if copy[x][y] == consts.Tiles.STONE:
+                    copy[x][y] = "#"
+        
+        logging.info("IGNORE LIST")
+        for line in copy:
+            logging.info(line)
