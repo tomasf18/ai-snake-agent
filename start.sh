@@ -20,6 +20,3 @@ gnome-terminal -- bash -c "$COMMAND; python3 viewer.py; exec bash"
 gnome-terminal -- bash -c "$COMMAND;SEED=$SEED python3 student.py; exec bash"
 
 echo "Chosen seed was $SEED"
-
-
-echo test 27393

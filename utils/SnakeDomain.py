@@ -19,6 +19,7 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 EATING_SUPERFOOD = True
+SAFE_MODE = True
 
 class SnakeDomain(SearchDomain):
     def __init__(self, map: dict, seed: int | None = None):
@@ -213,6 +214,7 @@ class SnakeDomain(SearchDomain):
         logging.info("GetNextMove: Started computing...")
         ti: float = time.time()
         global EATING_SUPERFOOD
+        global SAFE_MODE
 
         state = {
             "snake_body": snake.snake,
@@ -240,6 +242,15 @@ class SnakeDomain(SearchDomain):
         if step >= 2600:
             # print("STEP 2600 -> MODE: EATING SUPERFOOD")
             EATING_SUPERFOOD = True
+
+        
+        if SAFE_MODE:
+            EATING_SUPERFOOD = False
+
+            if 30 <= snake.score or 1300 <= step:
+                EATING_SUPERFOOD = True
+                SAFE_MODE = False
+                print(f"No more safe mode! (step={step}; score={snake.score})")
         
 
         # 1. Update the map removing the snake sight
@@ -542,12 +553,12 @@ class SnakeDomain(SearchDomain):
         """ This solution has problem in a W snake configuration, but ignore for now 🙏 """
         def calculateIgnores(width: int, height: int, reverse: bool = False):
             ignoreList: set = set()
-            for x in range(width):
+            for x in range(width if not reverse else height):
                 ignore: set = set()
                 insideSnake: bool = False
                 lastWasSnake: bool = False
                 snakePasses: int = 0
-                for y in range(height):
+                for y in range(height if not reverse else width):
                     pos = (x, y) if not reverse else (y, x)
                     if list(pos) in state["snake_body"]:
                         if lastWasSnake:
@@ -565,8 +576,8 @@ class SnakeDomain(SearchDomain):
                     ignoreList.update(ignore)
             return ignoreList
 
-        state["ignore"] = calculateIgnores(self.dim[0], self.dim[1]) | calculateIgnores(
-            self.dim[0], self.dim[1], reverse=True
+        state["ignore"] = calculateIgnores(*self.dim) | calculateIgnores(
+            *self.dim, reverse=True
         )
 
         logging.info("STATE IGNORE: " +  str(state["ignore"]))
