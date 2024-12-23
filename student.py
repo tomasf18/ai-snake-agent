@@ -20,7 +20,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         map_info = json.loads(await websocket.recv())
 
         snake: Snake = Snake()
-        domain: SnakeDomain = SnakeDomain(map=map_info, seed=int(SEED))
+        domain: SnakeDomain = SnakeDomain(map=map_info, seed=SEED)
         await domain.startupMap()
 
         while True:

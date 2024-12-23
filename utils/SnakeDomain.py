@@ -23,7 +23,7 @@ SAFE_MODE = True
 
 class SnakeDomain(SearchDomain):
     def __init__(self, map: dict, seed: int | None = None):
-        random.seed(seed)
+        random.seed(None if seed is None else int(seed))
         self.dim: tuple[int, int] = tuple(map["size"])
         self.time_per_frame: float = 1 / int(map["fps"])
         self.board: list[list[int]] = map["map"]
