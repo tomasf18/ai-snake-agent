@@ -17,6 +17,9 @@ The agent's performance was evaluated based on its relative results in 10 games 
 - **2nd Delivery:** 30% single-player, 70% multiplayer  
   - **Score:** 113.3 (Min: 0, Mean: 72, Max: 172)  
 
+For more detailed information, refer to the [project guide](./docs/IA_Snake.pdf).
+Also, you can see some more explanation details on the presentation [here](./docs/presentation.pdf).
+
 ## How to Run
 
 ### Installation
